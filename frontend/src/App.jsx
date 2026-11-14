@@ -1,4 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import CropDrawer from './data/components/CropDrawer';
+import { MOCK_CROPS } from './data/mockCrops';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import * as THREE from 'three';
@@ -13,59 +15,121 @@ import {
   Compass,
   X,
   Loader2,
+  Calendar,
+  Layers,
+  Thermometer,
+  Droplets,
+  CloudRain,
+  Sprout,
+  Waves,
+  Mountain,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Sparkles,
+  ArrowRight,
 } from 'lucide-react';
 
 // --------------------------------------------------
-// MAP CONFIGURATION
+// MAP & NASA GIBS SPECTRAL OVERLAY CONFIGURATION
 // --------------------------------------------------
 
 const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services';
 
-const MAP_STYLE = {
-  version: 8,
-  sources: {
-    satellite: {
-      type: 'raster',
-      tiles: [`${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`],
-      tileSize: 256,
-      maxzoom: 19,
-      attribution: 'Imagery © Esri, Maxar, Earthstar Geographics',
-    },
-    labels: {
-      type: 'raster',
-      tiles: [
-        `${ESRI}/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}`,
-      ],
-      tileSize: 256,
-      maxzoom: 19,
-      attribution: 'Labels © Esri',
-    },
-  },
-  layers: [
-    {
-      id: 'satellite',
-      type: 'raster',
-      source: 'satellite',
-      paint: { 'raster-opacity': 1 },
-    },
-    {
-      id: 'labels',
-      type: 'raster',
-      source: 'labels',
-      paint: { 'raster-opacity': 0.9 },
-    },
-  ],
-};
+const SPECTRAL_GRADIENT =
+  'linear-gradient(90deg, #1e3a8a 0%, #06b6d4 25%, #22c55e 50%, #eab308 75%, #ef4444 100%)';
 
-const DESTINATIONS = [
-  { name: 'Rourkela', lng: 84.8536, lat: 22.2604, zoom: 11 },
-  { name: 'Tokyo', lng: 139.6503, lat: 35.6762, zoom: 11 },
-  { name: 'Paris', lng: 2.3522, lat: 48.8566, zoom: 12 },
-  { name: 'New York', lng: -74.006, lat: 40.7128, zoom: 12 },
-  { name: 'Himalayas', lng: 86.9, lat: 28.0, zoom: 8 },
+const SPECTRAL_LAYERS = [
+  {
+    id: 'temperature',
+    name: 'Land Surface Temp',
+    dataset: 'MODIS Terra / ECOSTRESS',
+    icon: Thermometer,
+    unit: '-20°C to 45°C',
+    gradient: SPECTRAL_GRADIENT,
+    buildUrl: (date) =>
+      `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Land_Surface_Temp_Day/default/${date}/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png`,
+    maxzoom: 7,
+  },
+  {
+    id: 'soil-moisture',
+    name: 'Soil Moisture',
+    dataset: 'NASA SMAP L4',
+    icon: Droplets,
+    unit: '0.05 to 0.50 m³/m³',
+    gradient: 'linear-gradient(90deg, #92400e, #f59e0b, #38bdf8, #1d4ed8)',
+    buildUrl: (date) =>
+      `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/SMAP_L4_Analyzed_Surface_Soil_Moisture/default/${date}/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png`,
+    maxzoom: 6,
+  },
+  {
+    id: 'rainfall',
+    name: 'Precipitation & Rain',
+    dataset: 'NASA GPM IMERG',
+    icon: CloudRain,
+    unit: '0 to 50+ mm/day',
+    gradient: 'linear-gradient(90deg, #0f172a, #0284c7, #38bdf8, #a855f7, #f43f5e)',
+    buildUrl: (date) =>
+      `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/IMERG_Precipitation_Rate/default/${date}/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png`,
+    maxzoom: 6,
+  },
+  {
+    id: 'vegetation',
+    name: 'Vegetation Stress (NDVI)',
+    dataset: 'MODIS / Landsat',
+    icon: Sprout,
+    unit: 'Stressed (-0.1) → Lush (0.9)',
+    gradient: 'linear-gradient(90deg, #78350f, #d97706, #bef264, #15803d)',
+    buildUrl: (date) =>
+      `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_NDVI_8Day/default/${date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png`,
+    maxzoom: 9,
+  },
+  {
+    id: 'water-trends',
+    name: 'Long-Term Water Trends',
+    dataset: 'GRACE / GRACE-FO',
+    icon: Waves,
+    unit: 'Deficit (-30cm) → Surplus (+30cm)',
+    gradient: 'linear-gradient(90deg, #991b1b, #f97316, #f8fafc, #0ea5e9, #1e3a8a)',
+    buildUrl: () =>
+      `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GRACE_Tellus_Liquid_Water_Equivalent_Thickness_Land/default/2024-01-01/GoogleMapsCompatible_Level4/{z}/{y}/{x}.png`,
+    maxzoom: 4,
+  },
+  {
+    id: 'elevation',
+    name: 'Terrain & Elevation',
+    dataset: 'NASA SRTM DEM',
+    icon: Mountain,
+    unit: '0m → 6,000m+',
+    gradient: 'linear-gradient(90deg, #065f46, #65a30d, #ca8a04, #9ca3af, #ffffff)',
+    buildUrl: () =>
+      `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/SRTM_Color_Index/default/2000-02-11/GoogleMapsCompatible_Level12/{z}/{y}/{x}.png`,
+    maxzoom: 12,
+  },
 ];
 
-// Helper: Generate soft radial glow texture for the Sun & Corona
+const DESTINATIONS = [
+  { name: 'Rourkela', lng: 84.8536, lat: 22.2604, zoom: 6 },
+  { name: 'Tokyo', lng: 139.6503, lat: 35.6762, zoom: 6 },
+  { name: 'Paris', lng: 2.3522, lat: 48.8566, zoom: 6 },
+  { name: 'New York', lng: -74.006, lat: 40.7128, zoom: 6 },
+  { name: 'Himalayas', lng: 86.9, lat: 28.0, zoom: 5 },
+];
+
+// --------------------------------------------------
+// DATE HELPERS
+// --------------------------------------------------
+
+function getMaxSatelliteDate() {
+  const d = new Date();
+  d.setDate(d.getDate() - 3);
+  return d.toISOString().split('T')[0];
+}
+
+// --------------------------------------------------
+// SUN CORONA TEXTURE
+// --------------------------------------------------
+
 function createSunTexture() {
   const canvas = document.createElement('canvas');
   canvas.width = 256;
@@ -97,17 +161,152 @@ export default function App() {
   const mapRef = useRef(null);
   const markerRef = useRef(null);
   const requestRef = useRef(null);
+  const detailsSectionRef = useRef(null);
 
   const [mapReady, setMapReady] = useState(false);
 
+  // Search state
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState('');
   const [activeIndex, setActiveIndex] = useState(-1);
 
+  // Map UI state
   const [labelsOn, setLabelsOn] = useState(true);
-  const [coordinates, setCoordinates] = useState(null);
+  const [hoverCoords, setHoverCoords] = useState(null);
+
+  // Selected Date & Farm Location
+  const maxDate = getMaxSatelliteDate();
+  const [selectedDate, setSelectedDate] = useState(maxDate);
+
+  const [selectedLocation, setSelectedLocation] = useState({
+    lat: 22.2604,
+    lng: 84.8536,
+    name: 'Rourkela, Odisha',
+  });
+
+  // Left Spectral Overlay Dashboard State
+  const [activeSpectralId, setActiveSpectralId] = useState('temperature');
+  const [overlayOpacity, setOverlayOpacity] = useState(0.75);
+
+  // Right Telemetry & Prediction Drawer State
+  const [drawerOpen, setDrawerOpen] = useState(true);
+  const [telemetryLoading, setTelemetryLoading] = useState(false);
+  const [siteTelemetry, setSiteTelemetry] = useState(null);
+
+  // Crop Recommendations Drawer State
+  const [isCropDrawerOpen, setIsCropDrawerOpen] = useState(false);
+
+  const activeSpectral = SPECTRAL_LAYERS.find((l) => l.id === activeSpectralId) || null;
+
+  // Open the crop recommendations drawer (closes telemetry drawer so panels don't stack)
+  const handleOpenCrops = () => {
+    setDrawerOpen(false);
+    setIsCropDrawerOpen(true);
+  };
+
+  // ------------------------------------------------
+  // BACKEND API CALL: FETCH COLLECTED & PREDICTED DATA
+  // ------------------------------------------------
+
+  const fetchSiteTelemetry = useCallback(async (lat, lng, date, placeName = '') => {
+    setTelemetryLoading(true);
+    setDrawerOpen(true);
+
+    try {
+      const response = await fetch('/api/site-telemetry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat, lng, date }),
+      });
+
+      if (!response.ok) throw new Error('Backend unavailable');
+      const data = await response.json();
+      setSiteTelemetry(data);
+    } catch {
+      // Fallback telemetry preview until backend is connected
+      const isTropical = Math.abs(lat) < 25;
+      setSiteTelemetry({
+        location: placeName || `${lat.toFixed(3)}°, ${lng.toFixed(3)}°`,
+        date,
+        metrics: [
+          {
+            label: 'Surface Temp',
+            source: 'MODIS / ECOSTRESS',
+            value: isTropical ? '31.4 °C' : '19.8 °C',
+            spectralColor: isTropical ? '#f97316' : '#22c55e',
+          },
+          {
+            label: 'Heat Stress Risk',
+            source: 'NASA POWER',
+            value: isTropical ? 'Moderate (0.62)' : 'Low (0.21)',
+            spectralColor: isTropical ? '#eab308' : '#06b6d4',
+          },
+          {
+            label: 'Soil Moisture',
+            source: 'SMAP L4',
+            value: '0.28 m³/m³',
+            spectralColor: '#22c55e',
+          },
+          {
+            label: 'Rainfall Anomaly',
+            source: 'GPM IMERG',
+            value: '+14.2 mm/wk',
+            spectralColor: '#06b6d4',
+          },
+          {
+            label: 'Extreme Precip Risk',
+            source: 'GPM / POWER',
+            value: 'Low (12%)',
+            spectralColor: '#22c55e',
+          },
+          {
+            label: 'Evapotranspiration',
+            source: 'ECOSTRESS',
+            value: '4.2 mm/day',
+            spectralColor: '#eab308',
+          },
+          {
+            label: 'Frost Risk',
+            source: 'NASA POWER',
+            value: Math.abs(lat) > 35 ? 'Moderate (38%)' : 'Negligible (1%)',
+            spectralColor: Math.abs(lat) > 35 ? '#3b82f6' : '#22c55e',
+          },
+          {
+            label: 'Vegetation Stress',
+            source: 'MODIS NDVI',
+            value: '0.68 NDVI',
+            spectralColor: '#22c55e',
+          },
+          {
+            label: 'Groundwater Trend',
+            source: 'GRACE-FO',
+            value: '-1.4 cm eq.',
+            spectralColor: '#eab308',
+          },
+          {
+            label: 'Elevation',
+            source: 'SRTM DEM',
+            value: '218 m',
+            spectralColor: '#06b6d4',
+          },
+        ],
+      });
+    } finally {
+      setTelemetryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!mapReady) return;
+    fetchSiteTelemetry(
+      selectedLocation.lat,
+      selectedLocation.lng,
+      selectedDate,
+      selectedLocation.name
+    );
+  }, [selectedLocation, selectedDate, mapReady, fetchSiteTelemetry]);
 
   // ------------------------------------------------
   // INITIALIZE THREE.JS SPACE + MAPLIBRE GLOBE
@@ -116,7 +315,6 @@ export default function App() {
   useEffect(() => {
     if (!containerRef.current || !spaceCanvasRef.current) return;
 
-    // 1. Setup Three.js Scene, Camera & Renderer
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
       45,
@@ -135,11 +333,10 @@ export default function App() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(0x020308, 1);
 
-    // 2. Create 3D Spherical Starfield
+    // 3D Spherical Starfield
     const starCount = 4500;
     const starPositions = new Float32Array(starCount * 3);
     const starColors = new Float32Array(starCount * 3);
-
     const palette = [
       new THREE.Color('#ffffff'),
       new THREE.Color('#dbe9ff'),
@@ -148,7 +345,6 @@ export default function App() {
     ];
 
     for (let i = 0; i < starCount; i++) {
-      // Distribute stars uniformly on a large celestial sphere
       const radius = 800 + Math.random() * 400;
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
@@ -165,14 +361,8 @@ export default function App() {
     }
 
     const starGeometry = new THREE.BufferGeometry();
-    starGeometry.setAttribute(
-      'position',
-      new THREE.BufferAttribute(starPositions, 3)
-    );
-    starGeometry.setAttribute(
-      'color',
-      new THREE.BufferAttribute(starColors, 3)
-    );
+    starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+    starGeometry.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
 
     const starMaterial = new THREE.PointsMaterial({
       size: 1.8,
@@ -182,10 +372,9 @@ export default function App() {
       opacity: 0.95,
     });
 
-    const starField = new THREE.Points(starGeometry, starMaterial);
-    scene.add(starField);
+    scene.add(new THREE.Points(starGeometry, starMaterial));
 
-    // 3. Create 3D Sun & Corona Sprite in Celestial Coordinates
+    // 3D Sun & Corona Sprite
     const sunTexture = createSunTexture();
     const sunMaterial = new THREE.SpriteMaterial({
       map: sunTexture,
@@ -195,7 +384,6 @@ export default function App() {
     });
 
     const sunSprite = new THREE.Sprite(sunMaterial);
-    // Position the sun in space relative to initial view (Rourkela [84.8, 22.2])
     const sunLng = THREE.MathUtils.degToRad(-65);
     const sunLat = THREE.MathUtils.degToRad(-5);
     const sunDist = 900;
@@ -208,15 +396,47 @@ export default function App() {
     sunSprite.scale.set(260, 260, 1);
     scene.add(sunSprite);
 
-    // 4. Initialize MapLibre Globe
+    // Initialize MapLibre Globe
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: MAP_STYLE,
-      canvasContextAttributes: {
-        alpha: true,
+      style: {
+        version: 8,
+        sources: {
+          satellite: {
+            type: 'raster',
+            tiles: [`${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`],
+            tileSize: 256,
+            maxzoom: 19,
+            attribution: 'Imagery © Esri | NASA GIBS',
+          },
+          labels: {
+            type: 'raster',
+            tiles: [
+              `${ESRI}/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}`,
+            ],
+            tileSize: 256,
+            maxzoom: 19,
+            attribution: 'Labels © Esri',
+          },
+        },
+        layers: [
+          {
+            id: 'satellite',
+            type: 'raster',
+            source: 'satellite',
+            paint: { 'raster-opacity': 1 },
+          },
+          {
+            id: 'labels',
+            type: 'raster',
+            source: 'labels',
+            paint: { 'raster-opacity': 0.9 },
+          },
+        ],
       },
+      canvasContextAttributes: { alpha: true },
       center: [84.8536, 22.2604],
-      zoom: 1.5,
+      zoom: 1.65,
       minZoom: 0.8,
       maxZoom: 18,
       attributionControl: true,
@@ -224,15 +444,11 @@ export default function App() {
 
     mapRef.current = map;
 
-    // Sync Three.js Camera with MapLibre Globe Rotation, Pitch & Bearing
     const syncSpaceWithMap = () => {
       const center = map.getCenter();
       const bearing = map.getBearing();
       const pitch = map.getPitch();
 
-      // Dragging Earth left (lng increases) -> stars sweep right
-      // Dragging Earth down (lat increases) -> stars sweep down
-      // Rotating map clockwise (bearing increases) -> stars rotate counter-clockwise
       const yaw = THREE.MathUtils.degToRad(center.lng);
       const latPitch = THREE.MathUtils.degToRad(-center.lat);
       const roll = THREE.MathUtils.degToRad(bearing);
@@ -242,29 +458,14 @@ export default function App() {
       renderer.render(scene, camera);
     };
 
-    // Initial render
     syncSpaceWithMap();
-
     map.on('move', syncSpaceWithMap);
     map.on('render', syncSpaceWithMap);
 
-    map.on('error', (e) => {
-      console.error('MAPLIBRE ERROR:', e.error);
-    });
-
     map.on('style.load', () => {
       map.setProjection({ type: 'globe' });
-
-      // MapLibre GL v5 Atmosphere / Sky Glow
       map.setSky({
-        'atmosphere-blend': [
-          'interpolate',
-          ['linear'],
-          ['zoom'],
-          0, 1,
-          5, 1,
-          7, 0,
-        ],
+        'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 7, 0],
       });
     });
 
@@ -273,23 +474,26 @@ export default function App() {
       syncSpaceWithMap();
     });
 
-    map.on('mousemove', (e) => {
-      setCoordinates({
-        lng: e.lngLat.lng,
-        lat: e.lngLat.lat,
+    map.on('click', (e) => {
+      const { lng, lat } = e.lngLat;
+      addMarker(lng, lat);
+      setSelectedLocation({
+        lat,
+        lng,
+        name: `${lat.toFixed(3)}°, ${lng.toFixed(3)}°`,
       });
     });
 
-    map.on('mouseout', () => {
-      setCoordinates(null);
+    map.on('mousemove', (e) => {
+      setHoverCoords({ lng: e.lngLat.lng, lat: e.lngLat.lat });
     });
 
-    // Handle Window & Container Resize
+    map.on('mouseout', () => setHoverCoords(null));
+
     const resizeObserver = new ResizeObserver(() => {
       if (!containerRef.current) return;
       const width = containerRef.current.clientWidth;
       const height = containerRef.current.clientHeight;
-
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height);
@@ -302,14 +506,9 @@ export default function App() {
     return () => {
       resizeObserver.disconnect();
       markerRef.current?.remove();
-
-      if (requestRef.current) {
-        requestRef.current.abort();
-      }
-
+      requestRef.current?.abort();
       map.remove();
       mapRef.current = null;
-
       starGeometry.dispose();
       starMaterial.dispose();
       sunTexture.dispose();
@@ -319,24 +518,62 @@ export default function App() {
   }, []);
 
   // ------------------------------------------------
-  // LABEL TOGGLE
+  // DYNAMIC NASA SPECTRAL LAYER WRAPPING ON GLOBE
   // ------------------------------------------------
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady) return;
 
+    const layerId = 'nasa-spectral-layer';
+    const sourceId = 'nasa-spectral-source';
+
+    if (map.getLayer(layerId)) map.removeLayer(layerId);
+    if (map.getSource(sourceId)) map.removeSource(sourceId);
+
+    if (!activeSpectral) return;
+
+    map.addSource(sourceId, {
+      type: 'raster',
+      tiles: [activeSpectral.buildUrl(selectedDate)],
+      tileSize: 256,
+      maxzoom: activeSpectral.maxzoom,
+    });
+
+    const beforeLayer = map.getLayer('labels') ? 'labels' : undefined;
+
+    map.addLayer(
+      {
+        id: layerId,
+        type: 'raster',
+        source: sourceId,
+        paint: {
+          'raster-opacity': overlayOpacity,
+          'raster-fade-duration': 300,
+        },
+      },
+      beforeLayer
+    );
+  }, [activeSpectral, selectedDate, mapReady]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady) return;
+    if (map.getLayer('nasa-spectral-layer')) {
+      map.setPaintProperty('nasa-spectral-layer', 'raster-opacity', overlayOpacity);
+    }
+  }, [overlayOpacity, mapReady]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady) return;
     if (map.getLayer('labels')) {
-      map.setLayoutProperty(
-        'labels',
-        'visibility',
-        labelsOn ? 'visible' : 'none'
-      );
+      map.setLayoutProperty('labels', 'visibility', labelsOn ? 'visible' : 'none');
     }
   }, [labelsOn, mapReady]);
 
   // ------------------------------------------------
-  // MARKER
+  // MARKER & FLY TO LOCATION
   // ------------------------------------------------
 
   const addMarker = (lng, lat) => {
@@ -344,23 +581,15 @@ export default function App() {
     if (!map) return;
 
     markerRef.current?.remove();
-
     const element = document.createElement('div');
     element.className = 'earth-pin';
 
-    markerRef.current = new maplibregl.Marker({
-      element,
-      anchor: 'center',
-    })
+    markerRef.current = new maplibregl.Marker({ element, anchor: 'center' })
       .setLngLat([lng, lat])
       .addTo(map);
   };
 
-  // ------------------------------------------------
-  // FLY TO LOCATION
-  // ------------------------------------------------
-
-  const flyTo = (lng, lat, zoom = 12, bbox = null) => {
+  const flyTo = (lng, lat, zoom = 6, placeName = '') => {
     const map = mapRef.current;
     if (!map) return;
 
@@ -368,46 +597,29 @@ export default function App() {
     setError('');
     map.stop();
 
-    if (bbox && bbox.length === 4) {
-      const [south, north, west, east] = bbox.map(Number);
-
-      if ([south, north, west, east].every(Number.isFinite)) {
-        map.fitBounds(
-          [
-            [west, south],
-            [east, north],
-          ],
-          {
-            padding: 100,
-            maxZoom: 15,
-            duration: 3500,
-          }
-        );
-
-        addMarker(lng, lat);
-        return;
-      }
-    }
-
     map.flyTo({
       center: [lng, lat],
       zoom,
-      pitch: 45,
-      bearing: -15,
-      duration: 3500,
+      pitch: 25,
+      bearing: 0,
+      duration: 2800,
       essential: true,
     });
 
     addMarker(lng, lat);
+    setSelectedLocation({
+      lat,
+      lng,
+      name: placeName || `${lat.toFixed(3)}°, ${lng.toFixed(3)}°`,
+    });
   };
 
   // ------------------------------------------------
-  // SEARCH API
+  // GEOCODING SEARCH
   // ------------------------------------------------
 
   const searchPlaces = async (value) => {
     const text = value.trim();
-
     if (text.length < 3) {
       setSuggestions([]);
       setError('');
@@ -415,7 +627,6 @@ export default function App() {
     }
 
     requestRef.current?.abort();
-
     const controller = new AbortController();
     requestRef.current = controller;
 
@@ -437,74 +648,46 @@ export default function App() {
         headers: { Accept: 'application/json' },
       });
 
-      if (!response.ok) {
-        throw new Error(`Search HTTP ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(`Search HTTP ${response.status}`);
       const data = await response.json();
 
       setSuggestions(data);
       setActiveIndex(-1);
-
-      if (!data.length) {
-        setError('No places found. Try another search.');
-      }
+      if (!data.length) setError('No places found. Try another search.');
     } catch (err) {
       if (err.name !== 'AbortError') {
-        console.error(err);
         setError('Search failed. Check your internet connection.');
       }
     } finally {
-      if (!controller.signal.aborted) {
-        setSearching(false);
-      }
+      if (!controller.signal.aborted) setSearching(false);
     }
   };
 
-  // ------------------------------------------------
-  // DEBOUNCED SEARCH
-  // ------------------------------------------------
-
   useEffect(() => {
     const text = query.trim();
-
     if (text.length < 3) {
       setSuggestions([]);
       setError('');
       return;
     }
-
-    const timer = setTimeout(() => {
-      searchPlaces(text);
-    }, 700);
-
+    const timer = setTimeout(() => searchPlaces(text), 650);
     return () => clearTimeout(timer);
   }, [query]);
-
-  // ------------------------------------------------
-  // SELECT SEARCH RESULT
-  // ------------------------------------------------
 
   const selectPlace = (place) => {
     const lng = Number(place.lon);
     const lat = Number(place.lat);
-
     if (!Number.isFinite(lng) || !Number.isFinite(lat)) return;
 
-    setQuery(place.display_name.split(',').slice(0, 2).join(','));
+    const shortName = place.display_name.split(',').slice(0, 2).join(',');
+    setQuery(shortName);
     setSuggestions([]);
     setError('');
-
-    flyTo(lng, lat, 12, place.boundingbox);
+    flyTo(lng, lat, 7, shortName);
   };
-
-  // ------------------------------------------------
-  // SEARCH SUBMIT
-  // ------------------------------------------------
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (suggestions.length > 0) {
       selectPlace(suggestions[activeIndex >= 0 ? activeIndex : 0]);
     } else if (query.trim().length >= 3) {
@@ -512,49 +695,34 @@ export default function App() {
     }
   };
 
-  // ------------------------------------------------
-  // KEYBOARD NAVIGATION
-  // ------------------------------------------------
-
   const handleKeyDown = (e) => {
     if (!suggestions.length) return;
-
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setActiveIndex((i) => (i + 1) % suggestions.length);
     }
-
     if (e.key === 'ArrowUp') {
       e.preventDefault();
       setActiveIndex((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
     }
-
-    if (e.key === 'Escape') {
-      setSuggestions([]);
-    }
+    if (e.key === 'Escape') setSuggestions([]);
   };
 
   // ------------------------------------------------
   // MAP CONTROLS
   // ------------------------------------------------
 
-  const zoomIn = () => {
-    mapRef.current?.zoomIn({ duration: 500 });
-  };
-
-  const zoomOut = () => {
-    mapRef.current?.zoomOut({ duration: 500 });
-  };
+  const zoomIn = () => mapRef.current?.zoomIn({ duration: 500 });
+  const zoomOut = () => mapRef.current?.zoomOut({ duration: 500 });
 
   const resetView = () => {
     mapRef.current?.flyTo({
       center: [84.8536, 22.2604],
-      zoom: 1.5,
+      zoom: 1.65,
       pitch: 0,
       bearing: 0,
       duration: 2000,
     });
-
     markerRef.current?.remove();
     setQuery('');
     setSuggestions([]);
@@ -565,19 +733,14 @@ export default function App() {
       setError('Geolocation is not supported.');
       return;
     }
-
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        flyTo(
-          position.coords.longitude,
-          position.coords.latitude,
-          13
-        );
-      },
-      () => {
-        setError('Location access denied or unavailable.');
-      }
+      (pos) => flyTo(pos.coords.longitude, pos.coords.latitude, 8, 'My Farm Location'),
+      () => setError('Location access denied or unavailable.')
     );
+  };
+
+  const scrollToAbout = () => {
+    detailsSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   // ------------------------------------------------
@@ -585,138 +748,344 @@ export default function App() {
   // ------------------------------------------------
 
   return (
-    <main className="earth-app">
-      {/* THREE.JS SYNCED 3D SPACE & SUN CANVAS */}
-      <canvas ref={spaceCanvasRef} className="space-canvas" />
+    <div className="page-wrapper">
+      {/* HERO 3D GLOBE VIEWPORT (100vh) */}
+      <main className="earth-app">
+        <canvas ref={spaceCanvasRef} className="space-canvas" />
+        <div ref={containerRef} className="map-container" />
 
-      {/* MAPLIBRE GLOBE */}
-      <div ref={containerRef} className="map-container" />
+        {!mapReady && (
+          <div className="loading-screen">
+            <Loader2 className="spin" size={35} />
+            <p>Initializing NASA Earth Observation Globe...</p>
+          </div>
+        )}
 
-      {/* LOADING */}
-      {!mapReady && (
-        <div className="loading-screen">
-          <Loader2 className="spin" size={35} />
-          <p>Loading Planet Earth...</p>
+        {/* TOP-LEFT: SEARCH & QUICK DESTINATIONS */}
+        <div className="search-panel">
+          <form onSubmit={handleSubmit} className="search-form">
+            <MapPin className="search-pin" size={19} />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Search any city, address or landmark"
+              aria-label="Search places"
+            />
+            {searching && <Loader2 className="spin" size={19} />}
+            {query && (
+              <button
+                type="button"
+                className="clear-btn"
+                onClick={() => {
+                  setQuery('');
+                  setSuggestions([]);
+                  setError('');
+                  markerRef.current?.remove();
+                }}
+              >
+                <X size={18} />
+              </button>
+            )}
+            <button type="submit" className="search-btn">
+              <Search size={20} />
+            </button>
+          </form>
+
+          {suggestions.length > 0 && (
+            <div className="suggestion-list">
+              {suggestions.map((place, index) => (
+                <button
+                  key={place.place_id}
+                  className={
+                    index === activeIndex ? 'suggestion active' : 'suggestion'
+                  }
+                  onClick={() => selectPlace(place)}
+                  onMouseEnter={() => setActiveIndex(index)}
+                >
+                  <MapPin size={16} />
+                  <span>
+                    <strong>{place.display_name.split(',')[0]}</strong>
+                    <small>{place.display_name}</small>
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {error && <div className="error-message">{error}</div>}
+
+          {!query && (
+            <div className="quick-destinations">
+              {DESTINATIONS.map((place) => (
+                <button
+                  key={place.name}
+                  onClick={() => {
+                    setQuery(place.name);
+                    setSuggestions([]);
+                    flyTo(place.lng, place.lat, place.zoom, place.name);
+                  }}
+                >
+                  {place.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      )}
 
-      {/* SEARCH PANEL */}
-      <div className="search-panel">
-        <form onSubmit={handleSubmit} className="search-form">
-          <MapPin className="search-pin" size={19} />
-
+        {/* TOP-CENTER: OBSERVATION DATE PICKER */}
+        <div className="date-picker-bar">
+          <Calendar size={17} className="date-icon" />
+          <label htmlFor="obs-date">Observation Date</label>
           <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Search any city, address or landmark"
-            aria-label="Search places"
+            id="obs-date"
+            type="date"
+            value={selectedDate}
+            max={maxDate}
+            onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
           />
+        </div>
 
-          {searching && <Loader2 className="spin" size={19} />}
+        {/* LEFT: SPECTRAL OVERLAYS DASHBOARD */}
+        <aside className="spectral-dashboard">
+          <div className="spectral-header">
+            <Layers size={17} />
+            <h3>Spectral Overlays</h3>
+          </div>
+          <p className="spectral-sub">Wrap NASA datasets around the globe</p>
 
-          {query && (
+          <div className="spectral-list">
+            {SPECTRAL_LAYERS.map((layer) => {
+              const Icon = layer.icon;
+              const isActive = activeSpectralId === layer.id;
+              return (
+                <button
+                  key={layer.id}
+                  className={`spectral-item ${isActive ? 'active' : ''}`}
+                  onClick={() =>
+                    setActiveSpectralId(isActive ? null : layer.id)
+                  }
+                >
+                  <div className="spectral-item-top">
+                    <Icon size={16} />
+                    <span>{layer.name}</span>
+                  </div>
+                  <small>{layer.dataset}</small>
+                </button>
+              );
+            })}
+          </div>
+
+          {activeSpectral && (
+            <div className="spectral-legend">
+              <div className="legend-row">
+                <span>Layer Opacity</span>
+                <span>{Math.round(overlayOpacity * 100)}%</span>
+              </div>
+              <input
+                type="range"
+                min="0.15"
+                max="1"
+                step="0.05"
+                value={overlayOpacity}
+                onChange={(e) => setOverlayOpacity(Number(e.target.value))}
+              />
+              <div
+                className="legend-bar"
+                style={{ background: activeSpectral.gradient }}
+              />
+              <div className="legend-scale">{activeSpectral.unit}</div>
+            </div>
+          )}
+        </aside>
+
+        {/* RIGHT: MAP TOOLBAR */}
+        <div className="map-toolbar">
+          <button onClick={resetView} title="Reset globe">
+            <Compass size={20} />
+          </button>
+          <button onClick={zoomIn} title="Zoom in">
+            <Plus size={20} />
+          </button>
+          <button onClick={zoomOut} title="Zoom out">
+            <Minus size={20} />
+          </button>
+          <button onClick={locateMe} title="My location">
+            <LocateFixed size={20} />
+          </button>
+          <button
+            onClick={() => setLabelsOn((v) => !v)}
+            className={labelsOn ? 'selected' : ''}
+            title="Toggle labels"
+          >
+            <MapPin size={20} />
+          </button>
+        </div>
+
+        {/* RIGHT EDGE: TELEMETRY & PREDICTIONS DRAWER TOGGLE */}
+        <button
+          className={`drawer-toggle-btn ${drawerOpen ? 'open' : ''}`}
+          style={{ display: isCropDrawerOpen ? 'none' : undefined }}
+          onClick={() => setDrawerOpen((v) => !v)}
+          title="Toggle Site Telemetry & Predictions"
+        >
+          {drawerOpen ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+          <span>Data</span>
+        </button>
+
+        {/* RIGHT: TRANSPARENT SITE TELEMETRY & PREDICTIONS DRAWER */}
+        <aside className={`crop-drawer ${drawerOpen ? 'open' : ''}`}>
+          <div className="drawer-header">
+            <div>
+              <span className="drawer-badge">
+                <Sparkles size={13} /> NASA TELEMETRY & PREDICTIONS
+              </span>
+              <h3>{selectedLocation.name}</h3>
+              <p className="drawer-coords">
+                {selectedLocation.lat.toFixed(4)}°, {selectedLocation.lng.toFixed(4)}° ·{' '}
+                <strong>{selectedDate}</strong>
+              </p>
+            </div>
             <button
-              type="button"
-              className="clear-btn"
-              onClick={() => {
-                setQuery('');
-                setSuggestions([]);
-                setError('');
-                markerRef.current?.remove();
-              }}
+              className="drawer-close"
+              onClick={() => setDrawerOpen(false)}
+              aria-label="Close drawer"
             >
               <X size={18} />
             </button>
+          </div>
+
+          {/* TOP SPECTRAL LEGEND */}
+          <div className="drawer-spectral-legend">
+            <div className="drawer-legend-title">Spectral Intensity Scale</div>
+            <div
+              className="drawer-legend-bar"
+              style={{ background: SPECTRAL_GRADIENT }}
+            />
+            <div className="drawer-legend-labels">
+              <span>Low / Cold</span>
+              <span>Optimal</span>
+              <span>High / Stress</span>
+            </div>
+          </div>
+
+          {telemetryLoading ? (
+            <div className="drawer-loading">
+              <Loader2 className="spin" size={26} />
+              <p>Collecting satellite observations...</p>
+            </div>
+          ) : (
+            siteTelemetry && (
+              <>
+                {/* HORIZONTALLY LISTED DATA ROWS WITH SPECTRAL-COLORED VALUES */}
+                <div className="telemetry-list">
+                  {siteTelemetry.metrics.map((item, idx) => (
+                    <div key={idx} className="telemetry-row">
+                      <div className="telemetry-info">
+                        <span className="telemetry-label">{item.label}</span>
+                        <small className="telemetry-source">{item.source}</small>
+                      </div>
+                      <strong
+                        className="telemetry-value"
+                        style={{
+                          color: item.spectralColor,
+                          textShadow: `0 0 12px ${item.spectralColor}55`,
+                        }}
+                      >
+                        {item.value}
+                      </strong>
+                    </div>
+                  ))}
+                </div>
+
+                {/* BOTTOM CTA: OPEN CROP RECOMMENDATIONS DRAWER */}
+                <button
+                  type="button"
+                  className="recommend-route-btn"
+                  onClick={handleOpenCrops}
+                >
+                  <span>Tap to get recommended crops</span>
+                  <ArrowRight size={17} />
+                </button>
+              </>
+            )
           )}
+        </aside>
 
-          <button type="submit" className="search-btn">
-            <Search size={21} />
-          </button>
-        </form>
+        {/* CROP RECOMMENDATIONS DRAWER */}
+        <CropDrawer
+          isOpen={isCropDrawerOpen}
+          onClose={() => setIsCropDrawerOpen(false)}
+          coordinates={{ lat: selectedLocation.lat, lon: selectedLocation.lng }}
+          crops={MOCK_CROPS}
+        />
 
-        {/* SEARCH RESULTS */}
-        {suggestions.length > 0 && (
-          <div className="suggestion-list">
-            {suggestions.map((place, index) => (
-              <button
-                key={place.place_id}
-                className={
-                  index === activeIndex
-                    ? 'suggestion active'
-                    : 'suggestion'
-                }
-                onClick={() => selectPlace(place)}
-                onMouseEnter={() => setActiveIndex(index)}
-              >
-                <MapPin size={16} />
-                <span>
-                  <strong>
-                    {place.display_name.split(',')[0]}
-                  </strong>
-                  <small>{place.display_name}</small>
-                </span>
-              </button>
-            ))}
+        {/* BOTTOM-LEFT: LIVE COORDINATES */}
+        <div className="coordinates">
+          {hoverCoords
+            ? `${hoverCoords.lat.toFixed(4)}°, ${hoverCoords.lng.toFixed(4)}°`
+            : `${selectedLocation.lat.toFixed(4)}°, ${selectedLocation.lng.toFixed(4)}°`}
+        </div>
+
+        {/* BOTTOM-CENTER: SCROLL TO LEARN ABOUT PROJECT */}
+        <button className="scroll-cue" onClick={scrollToAbout}>
+          <span>Scroll to learn about project</span>
+          <ChevronDown size={18} />
+        </button>
+
+        {/* BOTTOM-RIGHT: BRANDING */}
+        <div className="earth-title">
+          <span>●</span> TERRAPREDICT AI
+        </div>
+      </main>
+
+      {/* BELOW-THE-FOLD: PROJECT & NASA DATASETS OVERVIEW */}
+      <section ref={detailsSectionRef} className="about-section">
+        <div className="about-container">
+          <span className="about-eyebrow">EARTH OBSERVATION FOR RESILIENT AGRICULTURE</span>
+          <h2>Data-Driven Crop Rotation Powered by NASA Satellites</h2>
+          <p className="about-lead">
+            TerraPredict AI helps farmers explore multi-season crop-rotation strategies
+            that restore soil health, reduce heat and water stress, and adapt to
+            long-term climate variability. Select any location on the globe and choose
+            an observation date to query historical and near-real-time satellite
+            indicators.
+          </p>
+
+          <div className="dataset-grid">
+            <div className="dataset-card">
+              <h4>SMAP & GRACE-FO</h4>
+              <p>
+                Surface and root-zone soil moisture paired with terrestrial water
+                storage anomalies to evaluate drought resilience and irrigation
+                demand.
+              </p>
+            </div>
+            <div className="dataset-card">
+              <h4>ECOSTRESS & MODIS</h4>
+              <p>
+                Land surface temperature, evapotranspiration rates, and NDVI
+                vegetation stress indices to detect crop heat stress early.
+              </p>
+            </div>
+            <div className="dataset-card">
+              <h4>GPM & NASA POWER</h4>
+              <p>
+                High-resolution rainfall patterns, extreme precipitation risks,
+                solar radiation, and frost windows tailored to local coordinates.
+              </p>
+            </div>
+            <div className="dataset-card">
+              <h4>Landsat & SRTM Elevation</h4>
+              <p>
+                Field-scale spectral reflectance and digital elevation models to
+                account for slope runoff, drainage, and microclimates.
+              </p>
+            </div>
           </div>
-        )}
-
-        {error && <div className="error-message">{error}</div>}
-
-        {/* QUICK DESTINATIONS */}
-        {!query && (
-          <div className="quick-destinations">
-            {DESTINATIONS.map((place) => (
-              <button
-                key={place.name}
-                onClick={() => {
-                  setQuery(place.name);
-                  setSuggestions([]);
-                  flyTo(place.lng, place.lat, place.zoom);
-                }}
-              >
-                {place.name}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* MAP TOOLBAR */}
-      <div className="map-toolbar">
-        <button onClick={resetView} title="Reset globe">
-          <Compass size={20} />
-        </button>
-        <button onClick={zoomIn} title="Zoom in">
-          <Plus size={20} />
-        </button>
-        <button onClick={zoomOut} title="Zoom out">
-          <Minus size={20} />
-        </button>
-        <button onClick={locateMe} title="My location">
-          <LocateFixed size={20} />
-        </button>
-        <button
-          onClick={() => setLabelsOn((v) => !v)}
-          className={labelsOn ? 'selected' : ''}
-          title="Toggle labels"
-        >
-          <MapPin size={20} />
-        </button>
-      </div>
-
-      {/* COORDINATES */}
-      <div className="coordinates">
-        {coordinates
-          ? `${coordinates.lat.toFixed(4)}°, ${coordinates.lng.toFixed(4)}°`
-          : 'Explore Planet Earth'}
-      </div>
-
-      {/* ATTRIBUTION */}
-      <div className="earth-title">
-        <span>●</span> TERRAPREDICT AI
-      </div>
-    </main>
+        </div>
+      </section>
+    </div>
   );
 }
