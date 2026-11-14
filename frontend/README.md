@@ -1,40 +1,16 @@
-# Frontend Application
+# React + Vite
 
-This directory contains the frontend source code, components, and assets for the project Terrapredict AI
+This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
-Critical Git & Branching Warnings
+Currently, two official plugins are available:
 
-Please read these rules carefully before making changes or opening a pull request.
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-Do Not Push Directly to `main`
-* **Protected Branch:** Direct commits or force-pushes to `main` are strictly prohibited.
-* **Branch Workflow:** Always create a new feature or bugfix branch from the latest `main` (e.g., `git checkout -b feat/login-ui` or `git checkout -b fix/navbar-alignment`).
+## React Compiler
 
-Pull Request (PR) Requirements
-* **Keep PRs Focused:** Submit one feature or bugfix per PR. Large, unrelated changes will be rejected.
-* **Sync Before Opening a PR:** Always pull and merge the latest `main` into your branch (`git pull origin main`) to resolve merge conflicts locally before requesting a review.
-* **No Broken Builds:** Your PR must pass all local build, linting, and test checks before you mark it ready for review.
-* **Screenshots Required:** For any UI or styling changes, attach before-and-after screenshots or screen recordings in the PR description.
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-Merging into `main` Warnings
-* **Approval Required:** Never merge your own PR without at least one team member review and approval.
-* **Check CI/CD Status:** Ensure all automated checks and build pipelines are green before merging.
-* **Use Squash and Merge:** Use **Squash and Merge** to keep the `main` commit history clean and readable.
-* **Delete Branch After Merge:** Delete your feature branch immediately after merging to avoid stale branches.
+## Expanding the Oxlint configuration
 
-Getting Started
-
-1. **Navigate to the frontend folder:**
-   ```bash
-   cd frontend
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-4. **Start the development server:**
-   ```bash
-   npm run dev
-   ```
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.

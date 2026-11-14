@@ -1,0 +1,387 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #000;
+  font-family: 'Inter', sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.earth-app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #020308;
+
+}
+
+.space-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.map-container {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  width: 100%;
+  height: 100%;
+
+}
+
+.maplibregl-canvas {
+  outline: none;
+}
+
+.maplibregl-ctrl-attrib {
+  font-size: 10px !important;
+}
+
+/* Loading */
+
+.loading-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  background: #000;
+  color: #22d3ee;
+  pointer-events: none;
+}
+
+.loading-screen p {
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* Search */
+
+.search-panel {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  z-index: 20;
+  width: min(520px, calc(100% - 90px));
+}
+
+.search-form {
+  height: 62px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 15px;
+  background: rgba(0, 0, 0, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 19px;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 0 30px rgba(6, 182, 212, 0.12);
+}
+
+.search-form:focus-within {
+  border-color: rgba(34, 211, 238, 0.7);
+}
+
+.search-pin {
+  flex-shrink: 0;
+  color: #22d3ee;
+}
+
+.search-form input {
+  min-width: 0;
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: white;
+  font-size: 15px;
+}
+
+.search-form input::placeholder {
+  color: #9ca3af;
+}
+
+.search-btn,
+.clear-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: #d1d5db;
+  cursor: pointer;
+}
+
+.search-btn:hover {
+  color: #22d3ee;
+}
+
+.clear-btn:hover {
+  color: white;
+}
+
+/* Quick destinations */
+
+.quick-destinations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 13px;
+}
+
+.quick-destinations button {
+  padding: 9px 15px;
+  border: 1px solid rgba(255, 255, 255, 0.23);
+  border-radius: 30px;
+  background: rgba(0, 0, 0, 0.72);
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  transition: 0.2s;
+}
+
+.quick-destinations button:hover {
+  border-color: #22d3ee;
+  color: #22d3ee;
+  transform: translateY(-2px);
+}
+
+/* Search suggestions */
+
+.suggestion-list {
+  margin-top: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 15px;
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(20px);
+}
+
+.suggestion {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px;
+  border: none;
+  background: transparent;
+  color: white;
+  text-align: left;
+  cursor: pointer;
+}
+
+.suggestion svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: #22d3ee;
+}
+
+.suggestion span {
+  min-width: 0;
+}
+
+.suggestion strong,
+.suggestion small {
+  display: block;
+}
+
+.suggestion strong {
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.suggestion small {
+  overflow: hidden;
+  color: #9ca3af;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.suggestion:hover,
+.suggestion.active {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.error-message {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fcd34d;
+  font-size: 12px;
+}
+
+/* Right toolbar */
+
+.map-toolbar {
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  transform: translateY(-50%);
+}
+
+.map-toolbar button {
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 13px;
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  cursor: pointer;
+  backdrop-filter: blur(15px);
+  transition: 0.2s;
+}
+
+.map-toolbar button:hover,
+.map-toolbar button.selected {
+  border-color: #22d3ee;
+  color: #22d3ee;
+  background: rgba(6, 182, 212, 0.17);
+}
+
+/* Earth marker */
+
+.earth-pin {
+  width: 19px;
+  height: 19px;
+  border: 3px solid white;
+  border-radius: 50%;
+  background: #06b6d4;
+  box-shadow: 0 0 0 7px rgba(6, 182, 212, 0.2);
+  animation: pulse 1.8s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.6);
+  }
+
+  100% {
+    box-shadow: 0 0 0 20px rgba(6, 182, 212, 0);
+  }
+}
+
+/* Coordinates */
+
+.coordinates {
+  position: absolute;
+  bottom: 22px;
+  left: 18px;
+  z-index: 10;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #d1d5db;
+  font-family: monospace;
+  font-size: 12px;
+  backdrop-filter: blur(15px);
+}
+
+/* Branding */
+
+.earth-title {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  z-index: 10;
+  color: white;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 10px black;
+}
+
+.earth-title span {
+  color: #22d3ee;
+}
+
+/* Animation */
+
+.spin {
+  animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 600px) {
+  .search-panel {
+    top: 12px;
+    left: 12px;
+    width: calc(100% - 75px);
+  }
+
+  .search-form {
+    height: 54px;
+    padding: 0 11px;
+  }
+
+  .search-form input {
+    font-size: 12px;
+  }
+
+  .map-toolbar {
+    right: 10px;
+  }
+
+  .map-toolbar button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .coordinates {
+    bottom: 12px;
+    left: 12px;
+  }
+
+  .earth-title {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .earth-pin,
+  .spin {
+    animation: none;
+  }
+}
