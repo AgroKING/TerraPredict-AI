@@ -1,0 +1,12 @@
+{
+  "name": "routing",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "body-parser": "^2.4.0",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "express-session": "^1.19.0",
+    "nodemon": "^3.1.11"
+  }
+}
