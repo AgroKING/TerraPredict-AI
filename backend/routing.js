@@ -7,14 +7,14 @@ const app = express();
 const port = 3000;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-app.use(express.static(path.join(__dirname, ".../frontend")));
+app.use(express.static(path.join(__dirname, "../frontend")));
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, ".../frontend/index.html"));
+  res.sendFile(path.join(__dirname, "../frontend/index.html"));
 });
 
 // fetch necessary input from API's and send the predicted value to front-end
-app.post("/api/forecast", async (req, res) => {
+app.post("/api/site-telemetry", async (req, res) => {
   // pass to the url
   const latitude = 77.6143;
   const longitude = 10.6143;
@@ -61,7 +61,7 @@ app.post("/api/forecast", async (req, res) => {
     res.json({
       success: true,
       recommendCrop: recommendCrop,
-      condfidenceScore: mlData.condfidence,
+      confidenceScore: mlData.confidence,
     });
   } catch (error) {
     console.log(`Pipeline issue: ${error}`);
