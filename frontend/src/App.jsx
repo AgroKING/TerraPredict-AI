@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import CropDrawer from './data/components/CropDrawer';
+import CropDrawer from './components/CropDrawer';
 import { MOCK_CROPS } from './data/mockCrops';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -1037,10 +1037,6 @@ export default function App() {
           onClose={() => setIsCropDrawerOpen(false)}
           coordinates={{ lat: selectedLocation.lat, lon: selectedLocation.lng }}
           crops={siteTelemetry?.crops?.length ? siteTelemetry.crops : MOCK_CROPS}
-          strategies={siteTelemetry?.strategies}
-          soilTerrain={siteTelemetry?.soil_terrain}
-          totalDatabaseCrops={siteTelemetry?.total_database_crops ?? 2071}
-          totalViableCrops={siteTelemetry?.total_viable_crops ?? null}
         />
 
         {/* BOTTOM-LEFT: LIVE COORDINATES */}
