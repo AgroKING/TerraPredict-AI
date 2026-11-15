@@ -8,6 +8,23 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+FAMILY_SYNONYMS = {
+    "Leguminosae": "Fabaceae",
+    "Papilionaceae": "Fabaceae",
+    "Cruciferae": "Brassicaceae",
+    "Gramineae": "Poaceae",
+    "Compositae": "Asteraceae",
+    "Umbelliferae": "Apiaceae",
+    "Labiatae": "Lamiaceae",
+}
+
+
+def normalize_family(raw_fam: str) -> str:
+    if not raw_fam or str(raw_fam).lower() in ("nan", "none", "unknown"):
+        return "Unknown"
+    leaf = str(raw_fam).split(":")[-1].strip().title()
+    return FAMILY_SYNONYMS.get(leaf, leaf)
+
 
 def trapezoid_score(val: float, vmin: float, vopmn: float, vopmx: float, vmax: float) -> float:
     if val is None or math.isnan(val):
@@ -73,6 +90,7 @@ def load_crops_catalog(crops_path: Path | None) -> pd.DataFrame:
         if p.exists():
             df = pd.read_csv(p)
             if "crop_id" in df.columns and "sow_tmin" in df.columns:
+                df["family"] = df["family"].astype(str).map(normalize_family)
                 return df
 
     from prepare_crops import build_prepared_crops
@@ -80,11 +98,11 @@ def load_crops_catalog(crops_path: Path | None) -> pd.DataFrame:
     out_default = Path("data/processed/crops_prepared.csv")
     out_default.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(out_default, index=False)
+    df["family"] = df["family"].astype(str).map(normalize_family)
     return df
 
 
 def load_monthly_diurnal_stats(out_dir: Path, lat: float, lon: float) -> dict[int, dict]:
-    """Reads monthly_{lat}_{lon}.csv (from make_monthly.py) for diurnal Tmin/Tmax offsets & hot-day frequency."""
     m_path = out_dir / f"monthly_{lat}_{lon}.csv"
     defaults = {m: {"tmin_offset": 4.5, "tmax_offset": 5.0, "hot_days_40": 0.0} for m in range(1, 13)}
     if not m_path.exists():
@@ -108,7 +126,6 @@ def load_monthly_diurnal_stats(out_dir: Path, lat: float, lon: float) -> dict[in
 
 
 def load_teleconnections_and_skill(out_dir: Path, lat: float, lon: float) -> dict:
-    """Reads data/raw/indices.csv (from fetch_indices.py) and skill_{lat}_{lon}.csv (from forecast_model.py)."""
     nino34 = None
     dmi = None
     idx_path = Path("data/raw/indices.csv")
@@ -217,7 +234,6 @@ def build_36_month_timeline(
         })
 
     timeline = []
-    # Year 1 uses full ML/ENSO `point`; Year 2 relaxes 65% toward `baseline`; Year 3 uses `baseline`
     yr_blend = {0: 1.0, 1: 0.35, 2: 0.0, 3: 0.0}
     for t in range(38):
         b = base_12[t % 12]
@@ -266,11 +282,9 @@ def evaluate_crop_window(
     window = timeline[start_t : start_t + c_len]
     sow_slot = window[0]
 
-    # 1. Sowing Thermal Gate
     if not (float(crop["sow_tmin"]) <= sow_slot["temp"] <= float(crop["sow_tmax"])):
         return 0.0, 0.0
 
-    # 2. Seedbed Establishment Moisture Gate
     req_soilw = float(crop["min_sowing_soilw"])
     eff_sow_soilw = (
         0.85 if irrigation == "irrigated"
@@ -281,28 +295,23 @@ def evaluate_crop_window(
 
     temps = [m["temp"] for m in window]
 
-    # 3. Juvenile Vernalization Gate (chilling within first 5 months after sowing)
     if bool(crop["vernalization_required"]):
         juv_temps = temps[1 : min(6, len(temps))]
         if sum(1 for tv in juv_temps if tv <= 8.5) < 2:
             return 0.0, 0.0
 
-    # 4. Cool-Season Cover Gate
     if bool(crop.get("cool_season_cover", False)):
         if sum(1 for tv in temps if tv <= 9.5) < 2:
             return 0.0, 0.0
 
-    # 5. Ripening / Termination Thermal Gate (final 2 months)
     if float(np.mean(temps[-2:])) < float(crop["harvest_tmin"]):
         return 0.0, 0.0
 
-    # 6. Diurnal Frost & Heat Survival Bounds (using monthly Tmin/Tmax offsets from make_monthly.py)
     if min(m["tmin_est"] for m in window) < float(crop["tmin"]) - 2.0:
         return 0.0, 0.0
     if max(m["tmax_est"] for m in window) > float(crop["tmax"]) + 2.0:
         return 0.0, 0.0
 
-    # 7. Trapezoidal Suitability Scoring
     t_mean = float(np.mean(temps))
     t_score = trapezoid_score(
         t_mean, float(crop["tmin"]), float(crop["topmn"]), float(crop["topmx"]), float(crop["tmax"])
@@ -312,19 +321,23 @@ def evaluate_crop_window(
     rain_lo10_sum = sum(m["rain_lo10"] for m in window)
     if irrigation == "irrigated":
         eff_rain = max(rain_sum, float(crop["ropmn"]) * (c_len / 12.0))
-        eff_rain_lo10 = eff_rain * 0.90
     elif irrigation == "limited_supplemental":
         eff_rain = rain_sum + 90.0 * (c_len / 12.0)
-        eff_rain_lo10 = rain_lo10_sum + 75.0 * (c_len / 12.0)
     else:
         eff_rain = rain_sum
-        eff_rain_lo10 = rain_lo10_sum
 
     ann_rain_eq = eff_rain * (12.0 / c_len)
-    ann_rain_lo10_eq = eff_rain_lo10 * (12.0 / c_len)
+    ann_rain_lo10_eq = rain_lo10_sum * (12.0 / c_len)
+
+    ann_rain_upper_eq = eff_rain * (12.0 / max(c_len, 6))
+    r_eff_for_score = (
+        ann_rain_eq
+        if ann_rain_eq <= float(crop["ropmx"])
+        else max(float(crop["ropmx"]), ann_rain_upper_eq)
+    )
 
     r_score = trapezoid_score(
-        ann_rain_eq, float(crop["rmin"]), float(crop["ropmn"]), float(crop["ropmx"]), float(crop["rmax"])
+        r_eff_for_score, float(crop["rmin"]), float(crop["ropmn"]), float(crop["ropmx"]), float(crop["rmax"])
     )
     drought_res = trapezoid_score(
         ann_rain_lo10_eq, float(crop["rmin"]), float(crop["ropmn"]), float(crop["ropmx"]), float(crop["rmax"])
@@ -413,7 +426,7 @@ def optimize_rotation_beam(
     strategy: str,
     active_teleconnection: bool = False,
     horizon: int = 36,
-    beam_width: int = 50,
+    beam_width: int = 60,
 ) -> dict:
     eval_cache: dict[tuple[int, int], tuple[float, float]] = {}
     for idx, crop in crops_df.iterrows():
@@ -433,8 +446,8 @@ def optimize_rotation_beam(
                 continue
 
             consec_idle = (t - events[-1]["end_t"]) if events else t
-            idle_pen = -0.14 if strategy == "current_baseline" else -0.10
-            if consec_idle >= 4:
+            idle_pen = -0.05 if consec_idle == 0 else (-0.14 if strategy == "current_baseline" else -0.10)
+            if consec_idle >= 3:
                 idle_pen -= 0.35
             next_beam.append((cum_score + idle_pen, t + 1, events))
 
@@ -454,50 +467,46 @@ def optimize_rotation_beam(
                 fit, drought_res = eval_cache[(idx, t)]
                 adj = 0.0
 
-                if strategy == "current_baseline":
-                    if events and events[-1]["crop_id"] == crop["crop_id"]:
-                        adj -= 0.30
-                else:
-                    for prev in reversed(events):
-                        months_since = t - prev["end_t"]
-                        if crop["family"] == "Fabaceae" and prev["family"] == "Fabaceae" and months_since < 48:
-                            adj -= 0.50 if not is_cover else 0.25
-                        if crop["family"] == "Brassicaceae" and prev["family"] == "Brassicaceae" and months_since < 36:
-                            adj -= 0.45
-                        if crop["crop_id"] == prev["crop_id"] and months_since < 24:
-                            adj -= 0.35
+                for prev in reversed(events):
+                    months_since = t - prev["end_t"]
+                    if crop["genus"] == prev["genus"] and months_since < 36:
+                        adj -= 0.75
+                    elif crop["family"] == prev["family"] and months_since < 36 and crop["family"] != "Poaceae":
+                        adj -= 0.45 if not is_cover else 0.25
 
-                    if events:
-                        last = events[-1]
-                        if crop["family"] == "Poaceae" and last["family"] == "Poaceae":
-                            adj -= 0.02 if last["genus"] == "Avena" else 0.14
-                        if crop["nitrogen_role"] == "heavy_feeder" and last["nitrogen_role"] == "fixer":
-                            adj += 0.10
-                        if crop["root_depth_class"] != last["root_depth_class"]:
-                            adj += 0.06
-                        if crop["family"] != last["family"]:
-                            adj += 0.08
+                if events:
+                    last = events[-1]
+                    if crop["family"] == last["family"]:
+                        adj -= 0.04 if last["genus"] == "Avena" else 0.22
+                    if crop["nitrogen_role"] == "heavy_feeder" and last["nitrogen_role"] == "fixer":
+                        adj += 0.12
+                    if crop["root_depth_class"] != last["root_depth_class"]:
+                        adj += 0.06
+                    if crop["family"] != last["family"]:
+                        adj += 0.10
 
-                    if strategy == "soil_regenerative":
-                        if is_cover:
-                            adj += 0.16
-                        if crop["nitrogen_role"] == "fixer":
-                            adj += 0.09
-                        if crop["root_depth_class"] == "deep":
-                            adj += 0.05
-                    elif strategy == "water_resilient":
-                        # Boost drought-resilience weight further when ENSO/IOD is in an active phase
-                        dr_weight = 0.30 if active_teleconnection else 0.22
-                        adj += dr_weight * (drought_res - fit)
-                        if float(crop["ropmn"]) <= 480.0:
-                            adj += 0.10
-                        if crop["root_depth_class"] == "deep":
-                            adj += 0.08
-                        if is_cover:
-                            adj += 0.06
+                if strategy == "soil_regenerative":
+                    if is_cover:
+                        adj += 0.18
+                    if crop["nitrogen_role"] == "fixer":
+                        adj += 0.10
+                    if crop["root_depth_class"] == "deep":
+                        adj += 0.06
+                elif strategy == "water_resilient":
+                    dr_weight = 0.36 if active_teleconnection else 0.28
+                    adj += dr_weight * (drought_res - fit)
+                    if float(crop["ropmn"]) <= 550.0:
+                        adj += 0.14
+                    if float(crop["ropmn"]) >= 1000.0:
+                        adj -= 0.16
+                    if crop["root_depth_class"] == "deep":
+                        adj += 0.08
+                    if is_cover:
+                        adj += 0.06
 
                 eff_months = min(t + c_len, horizon) - t
-                step_gain = eff_months * (fit + adj)
+                harvest_bonus = 0.38 if not is_cover else 0.18
+                step_gain = eff_months * (fit + adj) + harvest_bonus
                 sow_slot = timeline[t]
                 end_slot = timeline[min(t + c_len, len(timeline) - 1)]
 
@@ -514,8 +523,8 @@ def optimize_rotation_beam(
                     "end_t": t + c_len,
                     "cycle_months": c_len,
                     "year_num": (t // 12) + 1,
-                    "sow_label": f"{calendar.month_abbr[sow_slot['cal_month']]} Y{(t // 12) + 1}",
-                    "harvest_label": f"{calendar.month_abbr[end_slot['cal_month']]} Y{((t + c_len - 1) // 12) + 1}",
+                    "sow_label": f"{calendar.month_abbr[sow_slot['cal_month']]} {sow_slot['cal_year']}",
+                    "harvest_label": f"{calendar.month_abbr[end_slot['cal_month']]} {end_slot['cal_year']}",
                     "biophysical_fit": fit,
                     "drought_resilience": drought_res,
                 }
@@ -633,7 +642,7 @@ def main() -> None:
     scores_df.to_csv(csv_out, index=False)
 
     print(f"\n=== Crop Rotation Recommendations ({args.lat}°N, {args.lon}°E | {args.irrigation}) ===")
-    print(f"Catalog Evaluated: {len(crops_df)} global crop/ecotype profiles")
+    print(f"Catalog Evaluated: {len(crops_df)} global rotational crop profiles")
     print(f"Ocean Teleconnections: ENSO = {drivers['enso_phase']} | IOD = {drivers['iod_phase']}")
     print(f"Forecast Skill: {drivers['forecast_skill']}")
     print(
