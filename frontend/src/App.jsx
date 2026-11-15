@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import CropDrawer from './components/CropDrawer';
+import DataVisualizer from './components/DataVisualizer';
 import { MOCK_CROPS } from './data/mockCrops';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -977,26 +978,13 @@ export default function App() {
             </div>
           ) : siteTelemetry?.metrics ? (
             <>
-              {/* HORIZONTALLY LISTED DATA ROWS WITH SPECTRAL-COLORED VALUES */}
-              <div className="telemetry-list">
-                {siteTelemetry.metrics.map((item, idx) => (
-                  <div key={idx} className="telemetry-row">
-                    <div className="telemetry-info">
-                      <span className="telemetry-label">{item.label}</span>
-                      <small className="telemetry-source">{item.source}</small>
-                    </div>
-                    <strong
-                      className="telemetry-value"
-                      style={{
-                        color: item.spectralColor,
-                        textShadow: `0 0 12px ${item.spectralColor}55`,
-                      }}
-                    >
-                      {item.value}
-                    </strong>
-                  </div>
-                ))}
-              </div>
+              {/* INTERACTIVE DATA VISUALIZER: CHARTS, WHY CROPS & INDICATORS */}
+              <DataVisualizer
+                metrics={siteTelemetry.metrics}
+                forecast={siteTelemetry.forecast}
+                soilTerrain={siteTelemetry.soil_terrain}
+                crops={siteTelemetry.crops}
+              />
 
               {/* BOTTOM CTA: OPEN CROP RECOMMENDATIONS DRAWER */}
               <button
