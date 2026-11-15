@@ -299,14 +299,13 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!mapReady) return;
     fetchSiteTelemetry(
       selectedLocation.lat,
       selectedLocation.lng,
       selectedDate,
       selectedLocation.name
     );
-  }, [selectedLocation, selectedDate, mapReady, fetchSiteTelemetry]);
+  }, [selectedLocation, selectedDate, fetchSiteTelemetry]);
 
   // ------------------------------------------------
   // INITIALIZE THREE.JS SPACE + MAPLIBRE GLOBE
@@ -463,6 +462,7 @@ export default function App() {
     map.on('render', syncSpaceWithMap);
 
     map.on('style.load', () => {
+      setMapReady(true);
       map.setProjection({ type: 'globe' });
       map.setSky({
         'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 7, 0],
@@ -975,41 +975,59 @@ export default function App() {
               <Loader2 className="spin" size={26} />
               <p>Collecting satellite observations...</p>
             </div>
-          ) : (
-            siteTelemetry && (
-              <>
-                {/* HORIZONTALLY LISTED DATA ROWS WITH SPECTRAL-COLORED VALUES */}
-                <div className="telemetry-list">
-                  {siteTelemetry.metrics.map((item, idx) => (
-                    <div key={idx} className="telemetry-row">
-                      <div className="telemetry-info">
-                        <span className="telemetry-label">{item.label}</span>
-                        <small className="telemetry-source">{item.source}</small>
-                      </div>
-                      <strong
-                        className="telemetry-value"
-                        style={{
-                          color: item.spectralColor,
-                          textShadow: `0 0 12px ${item.spectralColor}55`,
-                        }}
-                      >
-                        {item.value}
-                      </strong>
+          ) : siteTelemetry?.metrics ? (
+            <>
+              {/* HORIZONTALLY LISTED DATA ROWS WITH SPECTRAL-COLORED VALUES */}
+              <div className="telemetry-list">
+                {siteTelemetry.metrics.map((item, idx) => (
+                  <div key={idx} className="telemetry-row">
+                    <div className="telemetry-info">
+                      <span className="telemetry-label">{item.label}</span>
+                      <small className="telemetry-source">{item.source}</small>
                     </div>
-                  ))}
-                </div>
+                    <strong
+                      className="telemetry-value"
+                      style={{
+                        color: item.spectralColor,
+                        textShadow: `0 0 12px ${item.spectralColor}55`,
+                      }}
+                    >
+                      {item.value}
+                    </strong>
+                  </div>
+                ))}
+              </div>
 
-                {/* BOTTOM CTA: OPEN CROP RECOMMENDATIONS DRAWER */}
-                <button
-                  type="button"
-                  className="recommend-route-btn"
-                  onClick={handleOpenCrops}
-                >
-                  <span>Tap to get recommended crops</span>
-                  <ArrowRight size={17} />
-                </button>
-              </>
-            )
+              {/* BOTTOM CTA: OPEN CROP RECOMMENDATIONS DRAWER */}
+              <button
+                type="button"
+                className="recommend-route-btn"
+                onClick={handleOpenCrops}
+              >
+                <span>Tap to get recommended crops</span>
+                <ArrowRight size={17} />
+              </button>
+            </>
+          ) : (
+            <div className="drawer-loading">
+              <p>Ready to query satellite indicators for this location.</p>
+              <button
+                type="button"
+                className="recommend-route-btn"
+                style={{ marginTop: '12px' }}
+                onClick={() =>
+                  fetchSiteTelemetry(
+                    selectedLocation.lat,
+                    selectedLocation.lng,
+                    selectedDate,
+                    selectedLocation.name
+                  )
+                }
+              >
+                <span>Fetch Observations</span>
+                <ArrowRight size={17} />
+              </button>
+            </div>
           )}
         </aside>
 

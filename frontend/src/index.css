@@ -844,3 +844,56 @@ body,
 .maplibregl-ctrl-attrib a {
   color: #cbd5e1 !important;
 }
+
+/* ==================================================
+   ECOCROP RECOMMENDATIONS FLOATING DRAWER
+   ================================================== */
+.ecocrop-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: opacity 0.4s ease;
+}
+
+.ecocrop-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.ecocrop-backdrop.closed {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ecocrop-drawer {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  bottom: 16px;
+  width: 92vw;
+  max-width: 680px;
+  min-width: 380px;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(8, 12, 22, 0.85);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.85);
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ecocrop-drawer.open {
+  transform: translateX(0);
+}
+
+.ecocrop-drawer.closed {
+  transform: translateX(calc(100% + 2rem));
+  pointer-events: none;
+}

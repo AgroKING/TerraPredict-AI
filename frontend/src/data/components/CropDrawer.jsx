@@ -57,17 +57,13 @@ export default function CropDrawer({
             {/* Click-Outside Backdrop */}
             <div
                 onClick={onClose}
-                className={`fixed inset-0 z-30 bg-transparent transition-opacity duration-500 ${
-                    isOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
-                }`}
+                className={`ecocrop-backdrop ${isOpen ? 'open' : 'closed'}`}
             />
 
             {/* Floating Frosted Glass Drawer Panel */}
             <aside
                 aria-hidden={!isOpen}
-                className={`fixed top-4 right-4 bottom-4 z-40 flex w-[92vw] flex-col overflow-hidden rounded-[34px] border border-white/20 bg-neutral-950/45 shadow-[0_25px_70px_rgba(0,0,0,0.7)] backdrop-blur-xl transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] sm:w-[48vw] sm:min-w-[450px] sm:max-w-[740px] ${
-                    isOpen ? 'translate-x-0' : 'translate-x-[calc(100%+2rem)]'
-                }`}
+                className={`ecocrop-drawer ${isOpen ? 'open' : 'closed'}`}
             >
                 {/* Header */}
                 <div className="border-b border-white/10 px-6 pt-5 pb-4">
@@ -106,7 +102,7 @@ export default function CropDrawer({
                             aria-label="Close crop recommendations"
                             className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/80 transition hover:bg-white/20 hover:text-white active:scale-95"
                         >
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <svg width="16" height="16" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
@@ -179,6 +175,9 @@ export default function CropDrawer({
                                     className="w-full rounded-xl border border-white/10 bg-black/50 px-3.5 py-2 pl-9 text-xs text-white placeholder-white/40 focus:border-emerald-400/50 focus:outline-none"
                                 />
                                 <svg
+                                    width="14"
+                                    height="14"
+                                    style={{ width: '14px', height: '14px' }}
                                     className="absolute top-2.5 left-3 h-3.5 w-3.5 text-white/40"
                                     fill="none"
                                     viewBox="0 0 24 24"

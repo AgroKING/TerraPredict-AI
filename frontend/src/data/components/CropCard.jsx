@@ -112,6 +112,9 @@ export default function CropCard({ crop }) {
             <div className="mt-3 flex items-center justify-center gap-1 text-[11px] font-medium text-white/40 transition-colors group-hover:text-white/70">
                 <span>{isExpanded ? 'Tap to collapse' : 'Tap to expand'}</span>
                 <svg
+                    width="12"
+                    height="12"
+                    style={{ width: '12px', height: '12px' }}
                     className={`h-3 w-3 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''
                         }`}
                     fill="none"
