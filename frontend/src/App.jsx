@@ -1018,7 +1018,9 @@ export default function App() {
           isOpen={isCropDrawerOpen}
           onClose={() => setIsCropDrawerOpen(false)}
           coordinates={{ lat: selectedLocation.lat, lon: selectedLocation.lng }}
-          crops={MOCK_CROPS}
+          crops={siteTelemetry?.crops?.length ? siteTelemetry.crops : MOCK_CROPS}
+          strategies={siteTelemetry?.strategies}
+          soilTerrain={siteTelemetry?.soil_terrain}
         />
 
         {/* BOTTOM-LEFT: LIVE COORDINATES */}

@@ -2,6 +2,10 @@
   "name": "routing",
   "version": "1.0.0",
   "type": "module",
+  "scripts": {
+    "start": "node routing.js",
+    "dev": "nodemon routing.js"
+  },
   "dependencies": {
     "body-parser": "^2.4.0",
     "dotenv": "^18.0.10",

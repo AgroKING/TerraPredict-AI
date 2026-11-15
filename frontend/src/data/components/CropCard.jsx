@@ -1,13 +1,19 @@
 import React, { useState } from 'react';
 
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80';
+
 export default function CropCard({ crop }) {
     const [isExpanded, setIsExpanded] = useState(false);
 
-    const getScoreColor = (score) => {
-        if (score >= 90) return 'text-emerald-400 bg-emerald-500/15 border-emerald-400/30';
-        if (score >= 80) return 'text-sky-400 bg-sky-500/15 border-sky-400/30';
+    const score = crop?.feasibilityScore ?? 0;
+    const getScoreColor = (s) => {
+        if (s >= 90) return 'text-emerald-400 bg-emerald-500/15 border-emerald-400/30';
+        if (s >= 80) return 'text-sky-400 bg-sky-500/15 border-sky-400/30';
         return 'text-amber-400 bg-amber-500/15 border-amber-400/30';
     };
+
+    const metrics = crop?.metrics || {};
+    const details = crop?.expandedDetails || {};
 
     return (
         <div
@@ -31,8 +37,11 @@ export default function CropCard({ crop }) {
                     }`}
             >
                 <img
-                    src={crop.image}
-                    alt={crop.name}
+                    src={crop?.image || FALLBACK_IMAGE}
+                    alt={crop?.name || 'Crop'}
+                    onError={(e) => {
+                        e.currentTarget.src = FALLBACK_IMAGE;
+                    }}
                     className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
@@ -40,34 +49,34 @@ export default function CropCard({ crop }) {
                 {/* Feasibility Pill Badge */}
                 <span
                     className={`absolute top-2.5 right-2.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold tracking-tight backdrop-blur-md ${getScoreColor(
-                        crop.feasibilityScore
+                        score
                     )}`}
                 >
-                    {crop.feasibilityScore}% Match
+                    {score}% Match
                 </span>
             </div>
 
             {/* Centered Crop Name */}
             <div className="mt-3.5 text-center">
                 <h3 className="text-base font-semibold tracking-tight text-white">
-                    {crop.name}
+                    {crop?.name || 'Crop Species'}
                 </h3>
-                <p className="text-xs italic text-white/50">{crop.scientificName}</p>
+                <p className="text-xs italic text-white/50">{crop?.scientificName || ''}</p>
             </div>
 
             {/* Core Metrics */}
             <div className="mt-3.5 space-y-1.5 border-t border-white/10 pt-3 text-xs">
                 <div className="flex items-center justify-between text-white/75">
                     <span className="text-white/50">Feasibility Score</span>
-                    <span className="font-medium text-white">{crop.feasibilityScore} / 100</span>
+                    <span className="font-medium text-white">{score} / 100</span>
                 </div>
                 <div className="flex items-center justify-between text-white/75">
                     <span className="text-white/50">Water Req.</span>
-                    <span className="font-medium text-white">{crop.metrics.waterNeed}</span>
+                    <span className="font-medium text-white">{metrics.waterNeed || '—'}</span>
                 </div>
                 <div className="flex items-center justify-between text-white/75">
                     <span className="text-white/50">Cycle</span>
-                    <span className="font-medium text-white">{crop.metrics.growthCycle}</span>
+                    <span className="font-medium text-white">{metrics.growthCycle || '—'}</span>
                 </div>
             </div>
 
@@ -80,20 +89,20 @@ export default function CropCard({ crop }) {
                     <div className="space-y-2.5 rounded-2xl border border-white/10 bg-black/25 p-3.5 text-xs text-white/80">
                         <div className="flex justify-between">
                             <span className="text-white/50">Optimal Soil Temp</span>
-                            <span className="font-medium text-white">{crop.metrics.soilTemp}</span>
+                            <span className="font-medium text-white">{metrics.soilTemp || '—'}</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-white/50">Sowing Window</span>
-                            <span className="font-medium text-white">{crop.expandedDetails.sowingWindow}</span>
+                            <span className="font-medium text-white">{details.sowingWindow || 'Seasonal'}</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-white/50">Nitrogen Balance</span>
                             <span className="font-medium text-emerald-300">
-                                {crop.expandedDetails.nitrogenImpact}
+                                {details.nitrogenImpact || 'Balanced'}
                             </span>
                         </div>
                         <p className="border-t border-white/10 pt-2 leading-relaxed text-white/70">
-                            {crop.expandedDetails.rotationBenefit}
+                            {details.rotationBenefit || 'Improves soil health and preserves root-zone structure.'}
                         </p>
                     </div>
                 </div>

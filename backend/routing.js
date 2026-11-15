@@ -5,8 +5,8 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const PORT = process.env.PORT || 3000;
-const ML_URL = process.env.ML_URL || "http://localhost:8000/predict";
+const PORT = process.env.PORT || 3001;
+const ML_URL = process.env.ML_URL || "http://localhost:8001/predict";
 const NASA_POWER_URL = "https://power.larc.nasa.gov/api/temporal/daily/point";
 const POWER_PARAMS = [
   "PRECTOTCORR",
@@ -23,6 +23,15 @@ const NASA_TIMEOUT_MS = 15000;
 const ML_TIMEOUT_MS = 30000;
 
 app.use(express.json());
+
+// Enable CORS for local Vite development
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
 
 // Serves the built frontend in production. In dev, Vite serves it instead.
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
@@ -135,8 +144,15 @@ function recentMean(arr, n) {
   return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
 }
 
-// Metrics the frontend lists in the telemetry panel. Status is one of
-// "good" | "moderate" | "risk" | "info". The frontend maps it to a color.
+// Color mapping for UI glow
+const STATUS_COLORS = {
+  good: "#22c55e",
+  moderate: "#eab308",
+  risk: "#ef4444",
+  info: "#06b6d4",
+};
+
+// Metrics the frontend lists in the telemetry panel.
 function buildMetrics(daily) {
   const surfaceTemp = lastValid(daily.surface_temp);
   const soilMoisture = lastValid(daily.soil_moisture);
@@ -148,22 +164,24 @@ function buildMetrics(daily) {
   const metrics = [];
 
   if (surfaceTemp !== null) {
+    const status = surfaceTemp > 35 ? "risk" : surfaceTemp > 30 ? "moderate" : "good";
     metrics.push({
       label: "Surface Temp",
       source: "NASA POWER",
       value: `${surfaceTemp.toFixed(1)} °C`,
-      status:
-        surfaceTemp > 35 ? "risk" : surfaceTemp > 30 ? "moderate" : "good",
+      status,
+      spectralColor: STATUS_COLORS[status],
     });
   }
 
   if (soilMoisture !== null) {
+    const status = soilMoisture < 0.2 ? "risk" : soilMoisture < 0.3 ? "moderate" : "good";
     metrics.push({
       label: "Soil Moisture",
       source: "NASA POWER",
       value: `${soilMoisture.toFixed(2)} m³/m³`,
-      status:
-        soilMoisture < 0.2 ? "risk" : soilMoisture < 0.3 ? "moderate" : "good",
+      status,
+      spectralColor: STATUS_COLORS[status],
     });
   }
 
@@ -173,14 +191,17 @@ function buildMetrics(daily) {
       source: "NASA POWER",
       value: `${rainWeek.toFixed(1)} mm`,
       status: "info",
+      spectralColor: STATUS_COLORS.info,
     });
   }
 
+  const heatStatus = heatDays > 10 ? "risk" : heatDays > 3 ? "moderate" : "good";
   metrics.push({
     label: "Heat Stress Days",
     source: "NASA POWER",
     value: `${heatDays} of ${daily.dates.length} days ≥ 35 °C`,
-    status: heatDays > 10 ? "risk" : heatDays > 3 ? "moderate" : "good",
+    status: heatStatus,
+    spectralColor: STATUS_COLORS[heatStatus],
   });
 
   if (humidity !== null) {
@@ -189,6 +210,7 @@ function buildMetrics(daily) {
       source: "NASA POWER",
       value: `${humidity.toFixed(0)} %`,
       status: "info",
+      spectralColor: STATUS_COLORS.info,
     });
   }
 
@@ -196,11 +218,12 @@ function buildMetrics(daily) {
 }
 
 // ML SERVICE
-function buildMlPayload(lat, lng, startIso, endIso, daily) {
+function buildMlPayload(lat, lng, startIso, endIso, daily, irrigation = "limited_supplemental") {
   return {
     location: { lat, lon: lng },
     date_range: { start: startIso, end: endIso },
     daily,
+    irrigation,
   };
 }
 
@@ -215,14 +238,13 @@ async function callMl(payload) {
   return response.json();
 }
 
-// Adapter from the ML response to the frontend contract. The model is a black
-// box for now, so this assumes the model returns { forecast, crops }. Change
-// this function when the real output format is known.
+// Normalizes ML response into frontend schema
 function normalizeMl(mlData) {
   const forecast = mlData.forecast
     ? {
         dates: mlData.forecast.dates ?? [],
         predicted: mlData.forecast.predicted ?? [],
+        monthly_outlook: mlData.forecast.monthly_outlook ?? [],
       }
     : null;
 
@@ -230,6 +252,7 @@ function normalizeMl(mlData) {
     id: c.id,
     name: c.name,
     scientificName: c.scientificName ?? "",
+    image: c.image ?? "",
     feasibilityScore: Math.round(c.feasibilityScore ?? 0),
     confidence: c.confidence ?? null,
     metrics: {
@@ -237,9 +260,21 @@ function normalizeMl(mlData) {
       growthCycle: c.metrics?.growthCycle ?? "—",
       soilTemp: c.metrics?.soilTemp ?? "—",
     },
+    expandedDetails: {
+      rotationBenefit:
+        c.expandedDetails?.rotationBenefit ??
+        "Maintains soil biological balance and preserves ground cover.",
+      nitrogenImpact: c.expandedDetails?.nitrogenImpact ?? "Neutral",
+      sowingWindow: c.expandedDetails?.sowingWindow ?? "Seasonal",
+    },
   }));
 
-  return { forecast, crops };
+  return {
+    forecast,
+    crops,
+    strategies: mlData.strategies ?? null,
+    soil_terrain: mlData.soil_terrain ?? null,
+  };
 }
 
 app.get("/", (req, res) => {
@@ -247,7 +282,7 @@ app.get("/", (req, res) => {
 });
 
 app.post("/api/site-telemetry", async (req, res) => {
-  const { lat, lng, date } = req.body ?? {};
+  const { lat, lng, date, irrigation } = req.body ?? {};
 
   const inputErrors = validateInput({ lat, lng, date });
   if (inputErrors.length) {
@@ -257,7 +292,7 @@ app.post("/api/site-telemetry", async (req, res) => {
   const endIso = date;
   const startIso = addDays(date, -(WINDOW_DAYS - 1));
 
-  // Step 1: NASA data. Nothing can be shown without it, so failure returns 502.
+  // Step 1: NASA POWER satellite data
   let daily;
   try {
     const parameter = await fetchPowerData(lat, lng, startIso, endIso);
@@ -277,17 +312,21 @@ app.post("/api/site-telemetry", async (req, res) => {
     metrics: buildMetrics(daily),
     forecast: null,
     crops: [],
+    strategies: null,
+    soil_terrain: null,
     errors: {},
   };
 
-  // Step 2: ML. Failure here returns partial data, so the metrics still render.
+  // Step 2: ML agronomic forecasting and crop rotation optimizer
   try {
     const mlData = await callMl(
-      buildMlPayload(lat, lng, startIso, endIso, daily),
+      buildMlPayload(lat, lng, startIso, endIso, daily, irrigation),
     );
-    const { forecast, crops } = normalizeMl(mlData);
-    response.forecast = forecast;
-    response.crops = crops;
+    const normalized = normalizeMl(mlData);
+    response.forecast = normalized.forecast;
+    response.crops = normalized.crops;
+    response.strategies = normalized.strategies;
+    response.soil_terrain = normalized.soil_terrain;
   } catch (err) {
     console.error("ML service error:", err);
     response.errors.ml = "ML service unreachable";
@@ -297,5 +336,5 @@ app.post("/api/site-telemetry", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Express Gateway running on port ${PORT}`);
 });
