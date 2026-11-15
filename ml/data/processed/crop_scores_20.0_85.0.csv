@@ -1,0 +1,103 @@
+crop_id,crop_name,scientific_name,family,sow_month_num,sow_month,cycle_months,is_cover_crop,biophysical_fit,drought_resilience
+spring_barley,Spring Barley,Hordeum vulgare,Poaceae,1,Jan,6,False,0.8264,0.1642
+pearl_millet,Pearl Millet (Bajra),Pennisetum glaucum,Poaceae,1,Jan,3,False,0.81,0.0
+sunn_hemp_cover,Sunn Hemp Tropical Cover,Crotalaria juncea,Fabaceae,1,Jan,3,True,0.6217,0.0
+cucurbita_pepo,Marrow,Cucurbita pepo,Cucurbitaceae,1,Jan,3,False,0.6211,0.0
+indian_mustard,Indian Mustard,Brassica juncea,Brassicaceae,1,Jan,3,False,0.62,0.0
+raphanus_sativus,Radish,Raphanus sativus,Brassicaceae,1,Jan,3,False,0.62,0.0
+solanum_melongena,Eggplant,Solanum melongena,Solanaceae,1,Jan,3,False,0.62,0.0
+pearl_millet,Pearl Millet (Bajra),Pennisetum glaucum,Poaceae,2,Feb,3,False,0.9809,0.0
+cucurbita_pepo,Marrow,Cucurbita pepo,Cucurbitaceae,2,Feb,3,False,0.7339,0.0
+solanum_melongena,Eggplant,Solanum melongena,Solanaceae,2,Feb,3,False,0.62,0.0
+indian_mustard,Indian Mustard,Brassica juncea,Brassicaceae,2,Feb,3,False,0.5964,0.0
+pearl_millet,Pearl Millet (Bajra),Pennisetum glaucum,Poaceae,3,Mar,3,False,1.0,0.0
+cucurbita_pepo,Marrow,Cucurbita pepo,Cucurbitaceae,3,Mar,3,False,0.9479,0.0
+indian_mustard,Indian Mustard,Brassica juncea,Brassicaceae,3,Mar,3,False,0.8725,0.0
+solanum_melongena,Eggplant,Solanum melongena,Solanaceae,3,Mar,3,False,0.62,0.0
+pearl_millet,Pearl Millet (Bajra),Pennisetum glaucum,Poaceae,4,Apr,3,False,1.0,1.0
+solanum_melongena,Eggplant,Solanum melongena,Solanaceae,5,May,3,False,1.0,1.0
+sunn_hemp_cover,Sunn Hemp Tropical Cover,Crotalaria juncea,Fabaceae,5,May,3,True,0.9848,0.8744
+cucumis_sativus,Cucumber,Cucumis sativus,Cucurbitaceae,5,May,4,False,0.9156,0.9176
+pearl_millet,Pearl Millet (Bajra),Pennisetum glaucum,Poaceae,5,May,3,False,0.8423,0.4994
+solanum_melongena,Eggplant,Solanum melongena,Solanaceae,6,Jun,3,False,0.9858,0.9162
+cucurbita_pepo,Marrow,Cucurbita pepo,Cucurbitaceae,6,Jun,3,False,0.9446,0.7684
+cucumis_sativus,Cucumber,Cucumis sativus,Cucurbitaceae,6,Jun,4,False,0.8773,0.7868
+pachyrhizus_tuberosus,Yam Bean,Pachyrhizus tuberosus,Fabaceae,6,Jun,7,False,0.827,0.6617
+allium_sativum,Garlic,Allium sativum,Alliaceae,6,Jun,4,False,0.7923,0.7629
+sunn_hemp_cover,Sunn Hemp Tropical Cover,Crotalaria juncea,Fabaceae,6,Jun,3,True,0.7674,0.2486
+abelmoschus_esculentus,Abelmoskus,Abelmoschus esculentus,Malvaceae,6,Jun,4,False,0.7073,0.4917
+pearl_millet,Pearl Millet (Bajra),Pennisetum glaucum,Poaceae,6,Jun,3,False,0.6249,0.0
+capsicum_annuum,Sweet Pepper,Capsicum annuum,Solanaceae,6,Jun,4,False,0.62,0.0
+indian_mustard,Indian Mustard,Brassica juncea,Brassicaceae,7,Jul,3,False,1.0,1.0
+paddy_rice,Paddy Rice,Oryza sativa,Poaceae,7,Jul,4,False,0.9798,1.0
+solanum_melongena,Eggplant,Solanum melongena,Solanaceae,7,Jul,3,False,0.967,0.77
+cucurbita_pepo,Marrow,Cucurbita pepo,Cucurbitaceae,7,Jul,3,False,0.9098,0.4985
+cucumis_sativus,Cucumber,Cucumis sativus,Cucurbitaceae,7,Jul,4,False,0.8889,0.8047
+pachyrhizus_tuberosus,Yam Bean,Pachyrhizus tuberosus,Fabaceae,7,Jul,7,False,0.8648,0.5095
+allium_sativum,Garlic,Allium sativum,Alliaceae,7,Jul,4,False,0.8252,0.8133
+eragrostis_tef,Tef,Eragrostis tef,Poaceae,7,Jul,4,False,0.7351,0.5343
+abelmoschus_esculentus,Abelmoskus,Abelmoschus esculentus,Malvaceae,7,Jul,4,False,0.7351,0.5343
+sunn_hemp_cover,Sunn Hemp Tropical Cover,Crotalaria juncea,Fabaceae,7,Jul,3,True,0.7109,0.0
+capsicum_annuum,Sweet Pepper,Capsicum annuum,Solanaceae,7,Jul,4,False,0.62,0.0
+pearl_millet,Pearl Millet (Bajra),Pennisetum glaucum,Poaceae,7,Jul,3,False,0.62,0.0
+allium_sativum,Garlic,Allium sativum,Alliaceae,8,Aug,4,False,1.0,1.0
+indian_mustard,Indian Mustard,Brassica juncea,Brassicaceae,8,Aug,3,False,1.0,1.0
+cucurbita_pepo,Marrow,Cucurbita pepo,Cucurbitaceae,8,Aug,3,False,1.0,0.9421
+paddy_rice,Paddy Rice,Oryza sativa,Poaceae,8,Aug,4,False,1.0,0.4545
+solanum_melongena,Eggplant,Solanum melongena,Solanaceae,8,Aug,3,False,1.0,1.0
+cucumis_sativus,Cucumber,Cucumis sativus,Cucurbitaceae,8,Aug,4,False,0.9576,0.9912
+eragrostis_tef,Tef,Eragrostis tef,Poaceae,8,Aug,4,False,0.8988,0.979
+abelmoschus_esculentus,Abelmoskus,Abelmoschus esculentus,Malvaceae,8,Aug,4,False,0.8988,0.979
+sunn_hemp_cover,Sunn Hemp Tropical Cover,Crotalaria juncea,Fabaceae,8,Aug,3,True,0.8737,0.5309
+pachyrhizus_tuberosus,Yam Bean,Pachyrhizus tuberosus,Fabaceae,8,Aug,7,False,0.8164,0.1103
+capsicum_annuum,Sweet Pepper,Capsicum annuum,Solanaceae,8,Aug,4,False,0.7499,1.0
+pearl_millet,Pearl Millet (Bajra),Pennisetum glaucum,Poaceae,8,Aug,3,False,0.7312,0.1559
+allium_sativum,Garlic,Allium sativum,Alliaceae,9,Sep,4,False,1.0,1.0
+indian_mustard,Indian Mustard,Brassica juncea,Brassicaceae,9,Sep,3,False,1.0,1.0
+capsicum_annuum,Sweet Pepper,Capsicum annuum,Solanaceae,9,Sep,4,False,1.0,1.0
+cucurbita_pepo,Marrow,Cucurbita pepo,Cucurbitaceae,9,Sep,3,False,1.0,1.0
+cucumis_sativus,Cucumber,Cucumis sativus,Cucurbitaceae,9,Sep,4,False,1.0,0.6084
+raphanus_sativus,Radish,Raphanus sativus,Brassicaceae,9,Sep,3,False,1.0,0.9814
+solanum_melongena,Eggplant,Solanum melongena,Solanaceae,9,Sep,3,False,1.0,0.4907
+eragrostis_tef,Tef,Eragrostis tef,Poaceae,9,Sep,4,False,1.0,1.0
+pearl_millet,Pearl Millet (Bajra),Pennisetum glaucum,Poaceae,9,Sep,3,False,1.0,0.8797
+abelmoschus_esculentus,Abelmoskus,Abelmoschus esculentus,Malvaceae,9,Sep,4,False,1.0,1.0
+sunn_hemp_cover,Sunn Hemp Tropical Cover,Crotalaria juncea,Fabaceae,9,Sep,3,True,1.0,1.0
+paddy_rice,Paddy Rice,Oryza sativa,Poaceae,9,Sep,4,False,0.9154,0.0
+indian_mustard,Indian Mustard,Brassica juncea,Brassicaceae,10,Oct,3,False,1.0,0.0
+capsicum_annuum,Sweet Pepper,Capsicum annuum,Solanaceae,10,Oct,4,False,1.0,0.0
+cucurbita_pepo,Marrow,Cucurbita pepo,Cucurbitaceae,10,Oct,3,False,1.0,0.1338
+eragrostis_tef,Tef,Eragrostis tef,Poaceae,10,Oct,4,False,1.0,0.0
+abelmoschus_esculentus,Abelmoskus,Abelmoschus esculentus,Malvaceae,10,Oct,4,False,1.0,0.0
+buckwheat_phacelia_cover,Buckwheat & Phacelia Catch Cover,Fagopyrum esculentum,Polygonaceae,10,Oct,3,True,1.0,0.9343
+sunn_hemp_cover,Sunn Hemp Tropical Cover,Crotalaria juncea,Fabaceae,10,Oct,3,True,1.0,0.2007
+pearl_millet,Pearl Millet (Bajra),Pennisetum glaucum,Poaceae,10,Oct,3,False,0.932,0.7007
+allium_sativum,Garlic,Allium sativum,Alliaceae,10,Oct,4,False,0.8963,0.0
+cucumis_sativus,Cucumber,Cucumis sativus,Cucurbitaceae,10,Oct,4,False,0.7985,0.0
+raphanus_sativus,Radish,Raphanus sativus,Brassicaceae,10,Oct,3,False,0.6738,0.0
+solanum_melongena,Eggplant,Solanum melongena,Solanaceae,10,Oct,3,False,0.6469,0.0
+paddy_rice,Paddy Rice,Oryza sativa,Poaceae,10,Oct,4,False,0.62,0.0
+buckwheat_phacelia_cover,Buckwheat & Phacelia Catch Cover,Fagopyrum esculentum,Polygonaceae,11,Nov,3,True,0.9094,0.0
+beta_vulgaris_var_saccharifera,Sugarbeet,Beta vulgaris var. saccharifera,Chenopodiaceae,11,Nov,3,False,0.7827,0.0
+pearl_millet,Pearl Millet (Bajra),Pennisetum glaucum,Poaceae,11,Nov,3,False,0.7201,0.0
+spring_barley,Spring Barley,Hordeum vulgare,Poaceae,11,Nov,6,False,0.7071,0.0
+cucurbita_pepo,Marrow,Cucurbita pepo,Cucurbitaceae,11,Nov,3,False,0.638,0.0
+abelmoschus_esculentus,Abelmoskus,Abelmoschus esculentus,Malvaceae,11,Nov,4,False,0.6294,0.0
+allium_sativum,Garlic,Allium sativum,Alliaceae,11,Nov,4,False,0.62,0.0
+indian_mustard,Indian Mustard,Brassica juncea,Brassicaceae,11,Nov,3,False,0.62,0.0
+capsicum_annuum,Sweet Pepper,Capsicum annuum,Solanaceae,11,Nov,4,False,0.62,0.0
+cucumis_sativus,Cucumber,Cucumis sativus,Cucurbitaceae,11,Nov,4,False,0.62,0.0
+paddy_rice,Paddy Rice,Oryza sativa,Poaceae,11,Nov,4,False,0.62,0.0
+raphanus_sativus,Radish,Raphanus sativus,Brassicaceae,11,Nov,3,False,0.62,0.0
+solanum_melongena,Eggplant,Solanum melongena,Solanaceae,11,Nov,3,False,0.62,0.0
+sunn_hemp_cover,Sunn Hemp Tropical Cover,Crotalaria juncea,Fabaceae,11,Nov,3,True,0.6146,0.0
+spring_barley,Spring Barley,Hordeum vulgare,Poaceae,12,Dec,6,False,0.8247,0.0
+buckwheat_phacelia_cover,Buckwheat & Phacelia Catch Cover,Fagopyrum esculentum,Polygonaceae,12,Dec,3,True,0.7449,0.0
+indian_mustard,Indian Mustard,Brassica juncea,Brassicaceae,12,Dec,3,False,0.62,0.0
+cucurbita_pepo,Marrow,Cucurbita pepo,Cucurbitaceae,12,Dec,3,False,0.62,0.0
+cucumis_sativus,Cucumber,Cucumis sativus,Cucurbitaceae,12,Dec,4,False,0.62,0.0
+paddy_rice,Paddy Rice,Oryza sativa,Poaceae,12,Dec,4,False,0.62,0.0
+raphanus_sativus,Radish,Raphanus sativus,Brassicaceae,12,Dec,3,False,0.62,0.0
+solanum_melongena,Eggplant,Solanum melongena,Solanaceae,12,Dec,3,False,0.62,0.0
+sunn_hemp_cover,Sunn Hemp Tropical Cover,Crotalaria juncea,Fabaceae,12,Dec,3,True,0.6176,0.0
+pearl_millet,Pearl Millet (Bajra),Pennisetum glaucum,Poaceae,12,Dec,3,False,0.6153,0.0
