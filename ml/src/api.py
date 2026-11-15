@@ -21,6 +21,7 @@ from score_crops import (
     export_monthly_crop_scores,
     load_crops_catalog,
     load_soil_terrain,
+    load_teleconnections_and_skill,
     optimize_rotation_beam,
 )
 
@@ -153,6 +154,25 @@ def construct_synthetic_or_observed_timeline(
     r_base = obs_rain_rate if obs_rain_rate is not None else (110.0 if abs_lat < 23.5 else 65.0)
     sw_base = obs_soilw_mean if obs_soilw_mean is not None else 0.42
 
+    tmin_off = 4.5
+    tmax_off = 5.0
+    if daily and daily.temp_avg and daily.temp_min:
+        valid_diffs = [
+            daily.temp_avg[i] - daily.temp_min[i]
+            for i in range(min(len(daily.temp_avg), len(daily.temp_min)))
+            if daily.temp_avg[i] is not None and daily.temp_min[i] is not None
+        ]
+        if valid_diffs:
+            tmin_off = max(1.0, float(np.mean(valid_diffs)))
+    if daily and daily.temp_avg and daily.temp_max:
+        valid_diffs = [
+            daily.temp_max[i] - daily.temp_avg[i]
+            for i in range(min(len(daily.temp_avg), len(daily.temp_max)))
+            if daily.temp_avg[i] is not None and daily.temp_max[i] is not None
+        ]
+        if valid_diffs:
+            tmax_off = max(1.0, float(np.mean(valid_diffs)))
+
     timeline = []
     for t in range(38):
         cal_month = ((start_month - 1 + t) % 12) + 1
@@ -175,12 +195,15 @@ def construct_synthetic_or_observed_timeline(
         r_mult = (1.0 + delta_rain_pct / 100.0) if year_idx >= 1 else 1.0
         sw_shift = (delta_rain_pct / 100.0) * 0.12 if year_idx >= 1 else 0.0
 
+        t_final = round(float(month_temp + t_shift), 2)
         timeline.append({
             "t": t,
             "year_num": year_idx + 1,
             "cal_month": cal_month,
             "cal_year": cal_year,
-            "temp": round(float(month_temp + t_shift), 2),
+            "temp": t_final,
+            "tmin_est": round(t_final - tmin_off, 2),
+            "tmax_est": round(t_final + tmax_off, 2),
             "rain": round(float(max(0.0, month_rain * r_mult)), 1),
             "rain_lo10": round(float(max(0.0, month_rain * r_mult * 0.72)), 1),
             "soilw": round(float(np.clip(month_soilw + sw_shift, 0.05, 1.0)), 3),
@@ -218,10 +241,16 @@ def predict_crops(req: PredictRequest):
     )
 
     # 3. Compute 3-Year Crop Rotation Strategies via beam search
+    tele_info = load_teleconnections_and_skill(Path("ml/data/processed"), lat, lon)
     strategies = {}
     for strat_key in ("soil_regenerative", "water_resilient", "current_baseline"):
         strategies[strat_key] = optimize_rotation_beam(
-            CROPS_CATALOG, timeline, soil, irrigation, strategy=strat_key
+            CROPS_CATALOG,
+            timeline,
+            soil,
+            irrigation,
+            strategy=strat_key,
+            active_teleconnection=tele_info.get("active_teleconnection", False),
         )
 
     # 4. Compute single-season biophysical feasibility across all 2,071 EcoCrop crops
