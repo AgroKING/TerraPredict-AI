@@ -31,6 +31,7 @@ import {
   Sparkles,
   ArrowRight,
   BookOpen,
+  Info,
 } from 'lucide-react';
 
 // --------------------------------------------------
@@ -42,18 +43,7 @@ const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services';
 const SPECTRAL_GRADIENT =
   'linear-gradient(90deg, #1e3a8a 0%, #06b6d4 25%, #22c55e 50%, #eab308 75%, #ef4444 100%)';
 
-function getGibsSafeDate(date) {
-  if (!date) return '2024-05-01';
-  // NASA GIBS WMTS tiles are available up to 2024. Clamp future simulated years to 2024.
-  const parts = date.split('-');
-  const year = parseInt(parts[0], 10);
-  if (year > 2024) {
-    return `2024-${parts[1] || '05'}-${parts[2] || '01'}`;
-  }
-  return date;
-}
-
-const SPECTRAL_LAYERS = [
+export const SPECTRAL_LAYERS = [
   {
     id: 'temperature',
     name: 'Field Warmth & Heat',
@@ -61,8 +51,11 @@ const SPECTRAL_LAYERS = [
     icon: Thermometer,
     unit: '-20°C to 45°C',
     gradient: SPECTRAL_GRADIENT,
-    buildUrl: (date) =>
-      `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Land_Surface_Temp_Day/default/${getGibsSafeDate(date)}/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png`,
+    minDate: '2000-02-24',
+    maxDate: '2026-11-15',
+    defaultDate: '2026-11-15',
+    layerIdentifier: 'MODIS_Terra_Land_Surface_Temp_Day',
+    tileMatrixSet: 'GoogleMapsCompatible_Level7',
     maxzoom: 7,
   },
   {
@@ -72,8 +65,11 @@ const SPECTRAL_LAYERS = [
     icon: Droplets,
     unit: 'Dry (0.05) → Wet (0.50)',
     gradient: 'linear-gradient(90deg, #92400e, #f59e0b, #38bdf8, #1d4ed8)',
-    buildUrl: (date) =>
-      `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/SMAP_L4_Analyzed_Surface_Soil_Moisture/default/${getGibsSafeDate(date)}/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png`,
+    minDate: '2015-03-31',
+    maxDate: '2026-11-10',
+    defaultDate: '2026-11-10',
+    layerIdentifier: 'SMAP_L4_Analyzed_Surface_Soil_Moisture',
+    tileMatrixSet: 'GoogleMapsCompatible_Level6',
     maxzoom: 6,
   },
   {
@@ -83,8 +79,11 @@ const SPECTRAL_LAYERS = [
     icon: CloudRain,
     unit: '0 to 50+ mm/day',
     gradient: 'linear-gradient(90deg, #0f172a, #0284c7, #38bdf8, #a855f7, #f43f5e)',
-    buildUrl: (date) =>
-      `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/IMERG_Precipitation_Rate/default/${getGibsSafeDate(date)}/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png`,
+    minDate: '2000-06-01',
+    maxDate: '2026-11-14',
+    defaultDate: '2026-11-14',
+    layerIdentifier: 'IMERG_Precipitation_Rate',
+    tileMatrixSet: 'GoogleMapsCompatible_Level6',
     maxzoom: 6,
   },
   {
@@ -94,8 +93,11 @@ const SPECTRAL_LAYERS = [
     icon: Sprout,
     unit: 'Stressed (-0.1) → Lush Green (0.9)',
     gradient: 'linear-gradient(90deg, #78350f, #d97706, #bef264, #15803d)',
-    buildUrl: (date) =>
-      `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_NDVI_8Day/default/${getGibsSafeDate(date)}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png`,
+    minDate: '2025-02-12',
+    maxDate: '2026-11-14',
+    defaultDate: '2026-11-14',
+    layerIdentifier: 'MODIS_Terra_NDVI_8Day',
+    tileMatrixSet: 'GoogleMapsCompatible_Level9',
     maxzoom: 9,
   },
   {
@@ -105,8 +107,11 @@ const SPECTRAL_LAYERS = [
     icon: Waves,
     unit: 'Deficit (-30cm) → Surplus (+30cm)',
     gradient: 'linear-gradient(90deg, #991b1b, #f97316, #f8fafc, #0ea5e9, #1e3a8a)',
-    buildUrl: () =>
-      `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GRACE_Tellus_Liquid_Water_Equivalent_Thickness_Mascon_CRI/default/2022-07-01/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png`,
+    minDate: '2002-04-04',
+    maxDate: '2022-07-01',
+    defaultDate: '2022-07-01',
+    layerIdentifier: 'GRACE_Tellus_Liquid_Water_Equivalent_Thickness_Mascon_CRI',
+    tileMatrixSet: 'GoogleMapsCompatible_Level6',
     maxzoom: 6,
   },
   {
@@ -116,11 +121,40 @@ const SPECTRAL_LAYERS = [
     icon: Mountain,
     unit: '0m → 6,000m+',
     gradient: 'linear-gradient(90deg, #065f46, #65a30d, #ca8a04, #9ca3af, #ffffff)',
-    buildUrl: () =>
-      `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/SRTM_Color_Index/default/2000-02-11/GoogleMapsCompatible_Level12/{z}/{y}/{x}.png`,
+    minDate: '2000-02-11',
+    maxDate: '2000-02-11',
+    defaultDate: '2000-02-11',
+    layerIdentifier: 'SRTM_Color_Index',
+    tileMatrixSet: 'GoogleMapsCompatible_Level12',
     maxzoom: 12,
   },
 ];
+
+export function getNearestAvailableDateForLayer(layer, targetDate) {
+  if (!layer) return targetDate;
+  if (!targetDate) return layer.defaultDate || layer.maxDate;
+
+  // Single static reference epoch (e.g., SRTM 30m DEM)
+  if (layer.minDate === layer.maxDate) {
+    return layer.maxDate;
+  }
+
+  // If after satellite's latest processed pass, clamp to latest
+  if (targetDate > layer.maxDate) {
+    return layer.maxDate;
+  }
+  // If before satellite's earliest operational date, clamp to earliest
+  if (targetDate < layer.minDate) {
+    return layer.minDate;
+  }
+
+  return targetDate;
+}
+
+export function buildLayerTileUrl(layer, date) {
+  const safeDate = getNearestAvailableDateForLayer(layer, date);
+  return `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/${layer.layerIdentifier}/default/${safeDate}/${layer.tileMatrixSet}/{z}/{y}/{x}.png`;
+}
 
 const DESTINATIONS = [
   { name: 'Rourkela', lng: 84.8536, lat: 22.2604, zoom: 6 },
@@ -212,8 +246,59 @@ export default function App() {
   // Crop Recommendations Drawer State
   const [isCropDrawerOpen, setIsCropDrawerOpen] = useState(false);
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
+  const [dateNotice, setDateNotice] = useState(null);
+
+  useEffect(() => {
+    if (dateNotice) {
+      const timer = setTimeout(() => setDateNotice(null), 7000);
+      return () => clearTimeout(timer);
+    }
+  }, [dateNotice]);
 
   const activeSpectral = SPECTRAL_LAYERS.find((l) => l.id === activeSpectralId) || null;
+
+  // Toggle or select a satellite map layer, automatically jumping to nearest available data date
+  const handleToggleSpectralLayer = (layer) => {
+    if (activeSpectralId === layer.id) {
+      setActiveSpectralId(null);
+      setDateNotice(null);
+    } else {
+      setActiveSpectralId(layer.id);
+      const nearestDate = getNearestAvailableDateForLayer(layer, selectedDate);
+      if (nearestDate !== selectedDate) {
+        setSelectedDate(nearestDate);
+        setDateNotice({
+          layerName: layer.name,
+          date: nearestDate,
+          reason: `No satellite data on ${selectedDate}. Jumped to nearest available:`,
+        });
+      } else {
+        setDateNotice(null);
+      }
+    }
+  };
+
+  // When farmer/user changes the observation date in the top bar
+  const handleDateChange = (e) => {
+    const newDate = e.target.value;
+    if (!newDate) return;
+    if (activeSpectral) {
+      const nearest = getNearestAvailableDateForLayer(activeSpectral, newDate);
+      setSelectedDate(nearest);
+      if (nearest !== newDate) {
+        setDateNotice({
+          layerName: activeSpectral.name,
+          date: nearest,
+          reason: `No data for ${newDate}. Jumped to nearest available:`,
+        });
+      } else {
+        setDateNotice(null);
+      }
+    } else {
+      setSelectedDate(newDate);
+      setDateNotice(null);
+    }
+  };
 
   // Open the crop recommendations drawer (closes telemetry drawer so panels don't stack)
   const handleOpenCrops = () => {
@@ -550,7 +635,7 @@ export default function App() {
 
     map.addSource(sourceId, {
       type: 'raster',
-      tiles: [activeSpectral.buildUrl(selectedDate)],
+      tiles: [buildLayerTileUrl(activeSpectral, selectedDate)],
       tileSize: 256,
       maxzoom: activeSpectral.maxzoom,
     });
@@ -850,28 +935,47 @@ export default function App() {
         </div>
 
         {/* TOP-CENTER: OBSERVATION DATE PICKER & HOW IT WORKS */}
-        <div className="top-action-bar">
-          <div className="date-picker-bar">
-            <Calendar size={17} className="date-icon" />
-            <label htmlFor="obs-date">Observation Date</label>
-            <input
-              id="obs-date"
-              type="date"
-              value={selectedDate}
-              max={maxDate}
-              onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
-            />
+        <div className="top-action-bar-container">
+          <div className="top-action-bar">
+            <div className="date-picker-bar">
+              <Calendar size={17} className="date-icon" />
+              <label htmlFor="obs-date">Observation Date</label>
+              <input
+                id="obs-date"
+                type="date"
+                value={selectedDate}
+                max={maxDate}
+                onChange={handleDateChange}
+              />
+            </div>
+
+            <button
+              type="button"
+              className="how-it-works-btn"
+              onClick={() => setIsHowItWorksOpen(true)}
+              title="Read system architecture & methodology"
+            >
+              <BookOpen size={15} className="text-emerald-400" />
+              <span>How It Works</span>
+            </button>
           </div>
 
-          <button
-            type="button"
-            className="how-it-works-btn"
-            onClick={() => setIsHowItWorksOpen(true)}
-            title="Read system architecture & methodology"
-          >
-            <BookOpen size={15} className="text-emerald-400" />
-            <span>How It Works</span>
-          </button>
+          {dateNotice && (
+            <div className="date-nearest-notice">
+              <Info size={13} className="text-amber-400 shrink-0" />
+              <span>
+                {dateNotice.reason} <strong>{dateNotice.date}</strong>
+              </span>
+              <button
+                type="button"
+                onClick={() => setDateNotice(null)}
+                className="ml-1 text-amber-200/60 hover:text-white transition"
+                title="Dismiss notice"
+              >
+                <X size={11} />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* LEFT: SPECTRAL OVERLAYS DASHBOARD */}
@@ -890,9 +994,7 @@ export default function App() {
                 <button
                   key={layer.id}
                   className={`spectral-item ${isActive ? 'active' : ''}`}
-                  onClick={() =>
-                    setActiveSpectralId(isActive ? null : layer.id)
-                  }
+                  onClick={() => handleToggleSpectralLayer(layer)}
                 >
                   <div className="spectral-item-top">
                     <Icon size={16} />
@@ -906,6 +1008,12 @@ export default function App() {
 
           {activeSpectral && (
             <div className="spectral-legend">
+              <div className="flex items-center justify-between text-[11px] text-white/60 mb-2">
+                <span>Pass Date:</span>
+                <span className="font-semibold text-emerald-400">
+                  {getNearestAvailableDateForLayer(activeSpectral, selectedDate)}
+                </span>
+              </div>
               <div className="legend-row">
                 <span>Layer Opacity</span>
                 <span>{Math.round(overlayOpacity * 100)}%</span>
