@@ -32,10 +32,10 @@ export default function HowItWorksModal({ isOpen, onClose }) {
       />
 
       {/* Main Modal Card */}
-      <div className="relative z-10 flex flex-col w-full max-w-4xl max-h-[92vh] rounded-[32px] border border-white/20 bg-neutral-950/85 shadow-[0_25px_80px_rgba(0,0,0,0.85)] backdrop-blur-2xl overflow-hidden text-slate-100">
+      <div className="relative z-10 flex flex-col w-full max-w-5xl max-h-[92vh] rounded-[28px] border border-white/20 bg-neutral-950/90 shadow-[0_25px_80px_rgba(0,0,0,0.85)] backdrop-blur-2xl overflow-hidden text-slate-100">
         
         {/* Modal Header */}
-        <div className="border-b border-white/10 px-6 py-5 flex items-center justify-between shrink-0 bg-white/[0.02]">
+        <div className="border-b border-white/10 px-6 py-4 flex items-center justify-between shrink-0 bg-white/[0.02]">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-500/30 bg-emerald-500/15 text-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.3)]">
               <BookOpen size={20} />
@@ -44,7 +44,7 @@ export default function HowItWorksModal({ isOpen, onClose }) {
               <span className="text-[11px] font-bold tracking-wider uppercase text-emerald-400">
                 Documentation & Scientific Methodology
               </span>
-              <h2 className="text-xl font-bold tracking-tight text-white">
+              <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white">
                 How TerraPredict-AI Works
               </h2>
             </div>
@@ -59,71 +59,71 @@ export default function HowItWorksModal({ isOpen, onClose }) {
           </button>
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="flex border-b border-white/10 bg-black/40 px-6 py-2.5 gap-2 overflow-x-auto shrink-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden text-xs font-semibold">
+        {/* Navigation Tabs - Full 5-column responsive layout, zero cutoff */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 border-b border-white/10 bg-black/50 p-2 sm:p-2.5 gap-1.5 shrink-0 text-xs font-semibold">
           <button
             type="button"
             onClick={() => setActiveTab('pipeline')}
-            className={`flex items-center gap-2 rounded-xl px-3.5 py-2 transition whitespace-nowrap ${
+            className={`flex items-center justify-center gap-2 rounded-xl px-2.5 py-2.5 transition text-center ${
               activeTab === 'pipeline'
-                ? 'border border-emerald-500/40 bg-emerald-500/20 text-emerald-300 shadow-sm'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
+                ? 'border border-emerald-500/40 bg-emerald-500/20 text-emerald-300 shadow-sm font-bold'
+                : 'text-white/65 hover:text-white hover:bg-white/5 border border-transparent'
             }`}
           >
-            <Cpu size={14} />
-            <span>1. System Architecture</span>
+            <Cpu size={14} className="shrink-0" />
+            <span className="truncate">1. Architecture</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('satellites')}
-            className={`flex items-center gap-2 rounded-xl px-3.5 py-2 transition whitespace-nowrap ${
+            className={`flex items-center justify-center gap-2 rounded-xl px-2.5 py-2.5 transition text-center ${
               activeTab === 'satellites'
-                ? 'border border-sky-500/40 bg-sky-500/20 text-sky-300 shadow-sm'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
+                ? 'border border-sky-500/40 bg-sky-500/20 text-sky-300 shadow-sm font-bold'
+                : 'text-white/65 hover:text-white hover:bg-white/5 border border-transparent'
             }`}
           >
-            <Satellite size={14} />
-            <span>2. NASA Satellite Telemetry</span>
+            <Satellite size={14} className="shrink-0" />
+            <span className="truncate">2. Satellites</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('scoring')}
-            className={`flex items-center gap-2 rounded-xl px-3.5 py-2 transition whitespace-nowrap ${
+            className={`flex items-center justify-center gap-2 rounded-xl px-2.5 py-2.5 transition text-center ${
               activeTab === 'scoring'
-                ? 'border border-amber-500/40 bg-amber-500/20 text-amber-300 shadow-sm'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
+                ? 'border border-amber-500/40 bg-amber-500/20 text-amber-300 shadow-sm font-bold'
+                : 'text-white/65 hover:text-white hover:bg-white/5 border border-transparent'
             }`}
           >
-            <Activity size={14} />
-            <span>3. Biophysical Screening</span>
+            <Activity size={14} className="shrink-0" />
+            <span className="truncate">3. Crop Scoring</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('rotation')}
-            className={`flex items-center gap-2 rounded-xl px-3.5 py-2 transition whitespace-nowrap ${
+            className={`flex items-center justify-center gap-2 rounded-xl px-2.5 py-2.5 transition text-center ${
               activeTab === 'rotation'
-                ? 'border border-teal-500/40 bg-teal-500/20 text-teal-300 shadow-sm'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
+                ? 'border border-teal-500/40 bg-teal-500/20 text-teal-300 shadow-sm font-bold'
+                : 'text-white/65 hover:text-white hover:bg-white/5 border border-transparent'
             }`}
           >
-            <Sprout size={14} />
-            <span>4. 3-Year Succession Engine</span>
+            <Sprout size={14} className="shrink-0" />
+            <span className="truncate">4. 3-Yr Rotation</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('guide')}
-            className={`flex items-center gap-2 rounded-xl px-3.5 py-2 transition whitespace-nowrap ${
+            className={`col-span-2 sm:col-span-1 flex items-center justify-center gap-2 rounded-xl px-2.5 py-2.5 transition text-center ${
               activeTab === 'guide'
-                ? 'border border-purple-500/40 bg-purple-500/20 text-purple-300 shadow-sm'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
+                ? 'border border-purple-500/40 bg-purple-500/20 text-purple-300 shadow-sm font-bold'
+                : 'text-white/65 hover:text-white hover:bg-white/5 border border-transparent'
             }`}
           >
-            <Compass size={14} />
-            <span>5. Quick User Guide</span>
+            <Compass size={14} className="shrink-0" />
+            <span className="truncate">5. Quick Guide</span>
           </button>
         </div>
 
