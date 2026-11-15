@@ -74,10 +74,19 @@ export default function CropDrawer({
 }) {
     const [viewMode, setViewMode] = useState('crops'); // 'crops' | 'rotation'
     const [activeStrategy, setActiveStrategy] = useState('soil_regenerative');
+    const [activeStep, setActiveStep] = useState(0);
 
     const currentStrategyData = strategies ? strategies[activeStrategy] : null;
     const schedule = currentStrategyData?.schedule || [];
     const placeTitle = locationName ? `${locationName} · ` : '';
+
+    const scrollToStep = (idx) => {
+        setActiveStep(idx);
+        const el = document.getElementById(`succession-node-${idx}`);
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    };
 
     return (
         <>
@@ -288,44 +297,121 @@ export default function CropDrawer({
                                     );
                                 })()}
 
-                                {/* Visual 36-Month Timeline Bar */}
-                                <div className="rounded-2xl border border-white/15 bg-neutral-900/60 p-4 backdrop-blur-md">
-                                    <div className="flex items-center justify-between text-xs text-white/70">
-                                        <span className="font-bold tracking-wider uppercase text-[11px] text-white/60">
-                                            36-Month Agronomic Succession Calendar
+                                {/* Interactive 36-Month Agronomic Succession Gantt Calendar */}
+                                <div className="rounded-2xl border border-white/15 bg-neutral-900/60 p-4 backdrop-blur-md space-y-3">
+                                    <div className="flex items-center justify-between text-xs">
+                                        <div>
+                                            <span className="font-bold tracking-wider uppercase text-[11px] text-emerald-400">
+                                                36-Month Agronomic Succession Calendar
+                                            </span>
+                                            <p className="text-[10px] text-white/50 mt-0.5">
+                                                Interactive Timeline · Click any crop window to inspect & scroll to its field card
+                                            </p>
+                                        </div>
+                                        <span className="rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-300">
+                                            100% Soil Cover
                                         </span>
-                                        <span className="text-emerald-400 font-semibold">Continuous Soil Cover</span>
                                     </div>
 
-                                    {/* Timeline Bar */}
-                                    <div className="mt-3 flex h-4 w-full overflow-hidden rounded-lg bg-black/50 p-0.5 border border-white/10">
+                                    {/* Interactive Gantt Bar */}
+                                    <div className="flex h-16 w-full rounded-xl bg-black/60 p-1 border border-white/10 gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                                         {schedule.map((item, idx) => {
-                                            const pct = Math.max(8, (item.cycle_months / 36) * 100);
-                                            const colors = [
-                                                'bg-emerald-500',
-                                                'bg-sky-500',
-                                                'bg-indigo-500',
-                                                'bg-amber-500',
-                                                'bg-teal-500',
-                                            ];
-                                            const color = colors[idx % colors.length];
+                                            const pct = Math.max(16, ((item.cycle_months || 5) / 36) * 100);
+                                            const isSelected = activeStep === idx;
+                                            const friendlyName = getFarmerFriendlyCropName(item.crop_name, coordinates);
+
+                                            // Determine functional theme color
+                                            const roleTheme =
+                                                item.nitrogen_role === 'fixer'
+                                                    ? 'from-emerald-700/90 to-emerald-900/90 border-emerald-400/50 text-emerald-100 hover:border-emerald-300'
+                                                    : item.root_depth_class === 'deep'
+                                                    ? 'from-sky-700/90 to-indigo-900/90 border-sky-400/50 text-sky-100 hover:border-sky-300'
+                                                    : item.nitrogen_role === 'heavy_feeder'
+                                                    ? 'from-amber-700/90 to-orange-900/90 border-amber-400/50 text-amber-100 hover:border-amber-300'
+                                                    : 'from-teal-700/90 to-cyan-900/90 border-teal-400/50 text-teal-100 hover:border-teal-300';
+
                                             return (
-                                                <div
+                                                <button
                                                     key={idx}
-                                                    style={{ width: `${pct}%` }}
-                                                    className={`h-full ${color}/80 hover:${color} transition-all border-r border-black/40 first:rounded-l-md last:rounded-r-md`}
-                                                    title={`${getFarmerFriendlyCropName(item.crop_name, coordinates)}: ${item.cycle_months} mo (${item.sow_label} → ${item.harvest_label})`}
-                                                />
+                                                    type="button"
+                                                    onClick={() => scrollToStep(idx)}
+                                                    style={{ width: `${pct}%`, minWidth: '85px' }}
+                                                    className={`group relative flex flex-col justify-between rounded-lg bg-gradient-to-br ${roleTheme} p-1.5 text-left transition-all duration-200 border ${
+                                                        isSelected
+                                                            ? 'ring-2 ring-emerald-300 shadow-[0_0_15px_rgba(52,211,153,0.4)] scale-[1.02] z-10'
+                                                            : 'opacity-85 hover:opacity-100 hover:scale-[1.01]'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center justify-between w-full">
+                                                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-black/50 text-[9px] font-bold text-white">
+                                                            {idx + 1}
+                                                        </span>
+                                                        <span className="rounded bg-black/40 px-1 py-0.2 text-[9px] font-semibold">
+                                                            {item.cycle_months} Mo
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-[11px] leading-tight truncate">
+                                                            {friendlyName}
+                                                        </div>
+                                                        <div className="text-[9px] opacity-75 truncate">
+                                                            {item.sow_label} → {item.harvest_label}
+                                                        </div>
+                                                    </div>
+                                                </button>
                                             );
                                         })}
                                     </div>
 
-                                    {/* Month & Season Markers */}
-                                    <div className="mt-1.5 flex justify-between text-[10px] text-white/50">
-                                        <span>Year 1 (Monsoon / Post-Monsoon)</span>
-                                        <span>Year 2 (Legume Succession)</span>
-                                        <span>Year 3 (Harvest & Stewardship)</span>
+                                    {/* 36-Month Milestone Ruler */}
+                                    <div className="grid grid-cols-3 gap-1 pt-0.5 text-center text-[10px] text-white/50 border-t border-white/10">
+                                        <div className="border-r border-white/10 pr-1">
+                                            <strong className="text-white/80">Year 1</strong> (Months 1–12)
+                                            <div className="text-[9px] text-white/40">Monsoon ➔ Post-Monsoon</div>
+                                        </div>
+                                        <div className="border-r border-white/10 pr-1">
+                                            <strong className="text-white/80">Year 2</strong> (Months 13–24)
+                                            <div className="text-[9px] text-white/40">Legume Nitrogen Enrichment</div>
+                                        </div>
+                                        <div className="pl-1">
+                                            <strong className="text-white/80">Year 3</strong> (Months 25–36)
+                                            <div className="text-[9px] text-white/40">High-Yield Cash Harvest</div>
+                                        </div>
                                     </div>
+
+                                    {/* Active Crop Quick Inspector Banner */}
+                                    {schedule[activeStep] && (() => {
+                                        const cur = schedule[activeStep];
+                                        const fName = getFarmerFriendlyCropName(cur.crop_name, coordinates);
+                                        const benefit = getHandoverBenefit(cur);
+                                        return (
+                                            <div className="mt-2 rounded-xl border border-emerald-500/30 bg-black/40 p-2.5 flex items-center justify-between gap-3">
+                                                <div className="min-w-0">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-[10px] font-bold text-emerald-300">
+                                                            #{activeStep + 1}
+                                                        </span>
+                                                        <span className="font-bold text-xs text-white truncate">
+                                                            {fName}
+                                                        </span>
+                                                        <span className="text-[10px] text-emerald-300/90 font-medium">
+                                                            ({cur.sow_label} → {cur.harvest_label} · {cur.cycle_months} Months)
+                                                        </span>
+                                                    </div>
+                                                    <p className="mt-1 text-[11px] text-white/70 leading-tight truncate">
+                                                        {benefit}
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => scrollToStep(activeStep)}
+                                                    className="shrink-0 rounded-lg border border-emerald-400/30 bg-emerald-500/20 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 hover:bg-emerald-500/30 transition"
+                                                >
+                                                    Inspect Card ↓
+                                                </button>
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
 
                                 {/* Connected Flow Chart Sequence */}
@@ -343,16 +429,29 @@ export default function CropDrawer({
                                             const isLast = idx === schedule.length - 1;
                                             const benefit = getHandoverBenefit(item);
                                             const friendlyName = getFarmerFriendlyCropName(item.crop_name, coordinates);
+                                            const isSelected = activeStep === idx;
 
                                             return (
                                                 <div key={idx} className="relative">
                                                     {/* Glowing Node Dot on Spine */}
-                                                    <div className="absolute -left-6 top-6 flex h-6 w-6 items-center justify-center rounded-full border border-emerald-400/60 bg-neutral-950 text-[10px] font-bold text-emerald-300 shadow-[0_0_10px_rgba(52,211,153,0.3)]">
+                                                    <div className={`absolute -left-6 top-6 flex h-6 w-6 items-center justify-center rounded-full border text-[10px] font-bold transition ${
+                                                        isSelected
+                                                            ? 'border-emerald-300 bg-emerald-500 text-black shadow-[0_0_15px_#34d399]'
+                                                            : 'border-emerald-400/60 bg-neutral-950 text-emerald-300 shadow-[0_0_10px_rgba(52,211,153,0.3)]'
+                                                    }`}>
                                                         {idx + 1}
                                                     </div>
 
                                                     {/* Flow Card */}
-                                                    <div className="rounded-2xl border border-white/15 bg-neutral-900/60 p-4 backdrop-blur-md transition hover:border-emerald-500/40 hover:bg-neutral-900/80 shadow-md">
+                                                    <div
+                                                        id={`succession-node-${idx}`}
+                                                        onClick={() => setActiveStep(idx)}
+                                                        className={`rounded-2xl border transition-all duration-200 p-4 backdrop-blur-md shadow-md cursor-pointer ${
+                                                            isSelected
+                                                                ? 'border-emerald-400 bg-neutral-900/90 ring-2 ring-emerald-400/40 shadow-[0_0_25px_rgba(52,211,153,0.25)]'
+                                                                : 'border-white/15 bg-neutral-900/60 hover:border-emerald-500/40 hover:bg-neutral-900/80'
+                                                        }`}
+                                                    >
                                                         <div className="flex gap-4">
                                                             {/* Crop Photo with Badge */}
                                                             <div className="relative h-24 w-24 sm:h-28 sm:w-28 flex-shrink-0 overflow-hidden rounded-2xl border border-white/15 bg-black/40">
