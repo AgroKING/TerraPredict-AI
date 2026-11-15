@@ -101,13 +101,13 @@ const SPECTRAL_LAYERS = [
   {
     id: 'water-trends',
     name: 'Deep Groundwater Level',
-    dataset: 'GRACE / GRACE-FO',
+    dataset: 'NASA GRACE Tellus',
     icon: Waves,
     unit: 'Deficit (-30cm) → Surplus (+30cm)',
     gradient: 'linear-gradient(90deg, #991b1b, #f97316, #f8fafc, #0ea5e9, #1e3a8a)',
     buildUrl: () =>
-      `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GRACE_Tellus_Liquid_Water_Equivalent_Thickness_Land/default/2024-01-01/GoogleMapsCompatible_Level4/{z}/{y}/{x}.png`,
-    maxzoom: 4,
+      `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GRACE_Tellus_Liquid_Water_Equivalent_Thickness_Mascon_CRI/default/2022-07-01/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png`,
+    maxzoom: 6,
   },
   {
     id: 'elevation',
