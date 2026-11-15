@@ -76,7 +76,7 @@ export default function CropDrawer({
                             </div>
                             <h2 className="mt-0.5 text-xl font-semibold tracking-tight text-white">
                                 {viewMode === 'crops'
-                                    ? 'Recommended Crops'
+                                    ? `Top Recommended Crops (${crops.length})`
                                     : '3-Year Crop Rotation Flow Chart'}
                             </h2>
                             {coordinates && (
@@ -114,7 +114,7 @@ export default function CropDrawer({
                             }`}
                         >
                             <span>🌾</span>
-                            <span>Single-Season Crops ({crops.length})</span>
+                            <span>Top Recommended Crops ({crops.length})</span>
                         </button>
                         <button
                             type="button"

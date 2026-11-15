@@ -249,7 +249,7 @@ function normalizeMl(mlData) {
       }
     : null;
 
-  const crops = (mlData.crops ?? []).map((c) => ({
+  const crops = (mlData.crops ?? []).slice(0, 10).map((c) => ({
     id: c.id,
     name: c.name,
     scientificName: c.scientificName ?? "",
