@@ -8,7 +8,15 @@ const CACHE_FILE = path.join(__dirname, 'data', 'crop_images_cache.json');
 const DEFAULT_FALLBACK = 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80';
 const BAD_URLS = new Set([
   'https://images.unsplash.com/photo-1587735243615-c03f25aaff15?auto=format&fit=crop&w=800&q=80', // orange photo erroneously labeled as pea
+  'https://images.unsplash.com/photo-1536657464919-892534f60d6e?auto=format&fit=crop&w=800&q=80', // orange tree photo erroneously labeled as barley
 ]);
+
+function isAuthenticUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  if (BAD_URLS.has(url)) return false;
+  // Prioritize verified Wikimedia / Wikipedia botanical photos over generic stock images
+  return url.includes('wikimedia.org') || url.includes('wikipedia.org');
+}
 
 // In-memory cache loaded from JSON file
 let imageCache = new Map();
@@ -20,7 +28,7 @@ function loadCache() {
       const raw = fs.readFileSync(CACHE_FILE, 'utf8');
       const parsed = JSON.parse(raw);
       for (const [k, v] of Object.entries(parsed)) {
-        if (v && !BAD_URLS.has(v)) {
+        if (v && isAuthenticUrl(v)) {
           imageCache.set(k.toLowerCase(), v);
         }
       }
@@ -37,7 +45,7 @@ function saveCache() {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     const obj = {};
     for (const [k, v] of imageCache.entries()) {
-      if (v && !BAD_URLS.has(v)) {
+      if (v && isAuthenticUrl(v)) {
         obj[k] = v;
       }
     }
@@ -100,14 +108,14 @@ export async function resolveCropImage(crop) {
   const commonName = cleanCommonName(crop.name);
   const commonKey = commonName.toLowerCase();
 
-  // 1. Check in-memory persistent cache (ignoring any known bad URLs)
-  if (sciKey && imageCache.has(sciKey) && !BAD_URLS.has(imageCache.get(sciKey))) {
+  // 1. Check in-memory persistent cache for verified authentic botanical images
+  if (sciKey && imageCache.has(sciKey) && isAuthenticUrl(imageCache.get(sciKey))) {
     return imageCache.get(sciKey);
   }
-  if (commonKey && imageCache.has(commonKey) && !BAD_URLS.has(imageCache.get(commonKey))) {
+  if (commonKey && imageCache.has(commonKey) && isAuthenticUrl(imageCache.get(commonKey))) {
     return imageCache.get(commonKey);
   }
-  if (cropId && imageCache.has(cropId) && !BAD_URLS.has(imageCache.get(cropId))) {
+  if (cropId && imageCache.has(cropId) && isAuthenticUrl(imageCache.get(cropId))) {
     return imageCache.get(cropId);
   }
 
