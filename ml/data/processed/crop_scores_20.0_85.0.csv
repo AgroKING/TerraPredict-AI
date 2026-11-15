@@ -1,0 +1,132 @@
+crop_id,crop_name,family,sow_month_num,sow_month,cycle_months,is_cover_crop,biophysical_fit,drought_resilience
+pigeon_pea,Pigeon Pea (Arhar),Fabaceae,1,Jan,6,False,1.0,0.0
+buckwheat_phacelia_cover,Buckwheat & Phacelia Catch Cover,Polygonaceae,1,Jan,3,True,0.8258,0.0
+sorghum,Sorghum (Jowar),Poaceae,1,Jan,4,False,0.8214,0.0
+pearl_millet,Pearl Millet (Bajra),Poaceae,1,Jan,3,False,0.81,0.0
+sunflower,Sunflower,Asteraceae,1,Jan,4,False,0.6871,0.0
+chickpea,Chickpea (Gram),Fabaceae,1,Jan,4,False,0.6871,0.0
+sunn_hemp_cover,Sunn Hemp Tropical Cover,Fabaceae,1,Jan,3,True,0.6217,0.0
+grain_maize,Grain Maize,Poaceae,1,Jan,4,False,0.62,0.0
+black_gram,Black Gram (Urad),Fabaceae,1,Jan,3,False,0.62,0.0
+soybean,Soybean,Fabaceae,1,Jan,4,False,0.62,0.0
+groundnut,Groundnut (Peanut),Fabaceae,1,Jan,4,False,0.62,0.0
+indian_mustard,Indian Mustard,Brassicaceae,1,Jan,4,False,0.62,0.0
+mung_bean,Mung Bean (Moong),Fabaceae,1,Jan,3,False,0.5914,0.0
+sorghum,Sorghum (Jowar),Poaceae,2,Feb,4,False,1.0,0.0
+pigeon_pea,Pigeon Pea (Arhar),Fabaceae,2,Feb,6,False,1.0,1.0
+sunflower,Sunflower,Asteraceae,2,Feb,4,False,0.9888,0.0
+grain_maize,Grain Maize,Poaceae,2,Feb,4,False,0.9832,0.0
+groundnut,Groundnut (Peanut),Fabaceae,2,Feb,4,False,0.9832,0.0
+pearl_millet,Pearl Millet (Bajra),Poaceae,2,Feb,3,False,0.9809,0.0
+soybean,Soybean,Fabaceae,2,Feb,4,False,0.9776,0.0
+chickpea,Chickpea (Gram),Fabaceae,2,Feb,4,False,0.9478,0.0
+sunn_hemp_cover,Sunn Hemp Tropical Cover,Fabaceae,2,Feb,3,True,0.7909,0.0
+indian_mustard,Indian Mustard,Brassicaceae,2,Feb,4,False,0.7377,0.0
+black_gram,Black Gram (Urad),Fabaceae,2,Feb,3,False,0.62,0.0
+mung_bean,Mung Bean (Moong),Fabaceae,2,Feb,3,False,0.5914,0.0
+sunn_hemp_cover,Sunn Hemp Tropical Cover,Fabaceae,3,Mar,3,True,1.0,0.0
+pearl_millet,Pearl Millet (Bajra),Poaceae,3,Mar,3,False,1.0,0.2221
+black_gram,Black Gram (Urad),Fabaceae,3,Mar,3,False,1.0,0.0
+mung_bean,Mung Bean (Moong),Fabaceae,3,Mar,3,False,0.9714,0.0
+sorghum,Sorghum (Jowar),Poaceae,3,Mar,4,False,0.62,1.0
+sunn_hemp_cover,Sunn Hemp Tropical Cover,Fabaceae,4,Apr,3,True,0.9272,1.0
+black_gram,Black Gram (Urad),Fabaceae,4,Apr,3,False,0.8874,0.3372
+pearl_millet,Pearl Millet (Bajra),Poaceae,4,Apr,3,False,0.7847,1.0
+sorghum,Sorghum (Jowar),Poaceae,4,Apr,4,False,0.62,0.0
+mung_bean,Mung Bean (Moong),Fabaceae,4,Apr,3,False,0.5914,0.4698
+pigeon_pea,Pigeon Pea (Arhar),Fabaceae,5,May,6,False,0.8179,0.9949
+groundnut,Groundnut (Peanut),Fabaceae,5,May,4,False,0.7973,0.9878
+sunn_hemp_cover,Sunn Hemp Tropical Cover,Fabaceae,5,May,3,True,0.62,0.7807
+sorghum,Sorghum (Jowar),Poaceae,5,May,4,False,0.62,0.0
+pearl_millet,Pearl Millet (Bajra),Poaceae,5,May,3,False,0.62,0.4057
+black_gram,Black Gram (Urad),Fabaceae,5,May,3,False,0.62,0.6892
+mung_bean,Mung Bean (Moong),Fabaceae,5,May,3,False,0.5914,0.0
+pigeon_pea,Pigeon Pea (Arhar),Fabaceae,6,Jun,6,False,0.836,1.0
+upland_rice,Upland Rice,Poaceae,6,Jun,4,False,0.7526,1.0
+groundnut,Groundnut (Peanut),Fabaceae,6,Jun,4,False,0.7261,0.8257
+sunn_hemp_cover,Sunn Hemp Tropical Cover,Fabaceae,6,Jun,3,True,0.62,0.1549
+grain_maize,Grain Maize,Poaceae,6,Jun,4,False,0.62,0.0
+sorghum,Sorghum (Jowar),Poaceae,6,Jun,4,False,0.62,0.0
+pearl_millet,Pearl Millet (Bajra),Poaceae,6,Jun,3,False,0.62,0.0
+black_gram,Black Gram (Urad),Fabaceae,6,Jun,3,False,0.62,0.362
+soybean,Soybean,Fabaceae,6,Jun,4,False,0.62,0.0
+mung_bean,Mung Bean (Moong),Fabaceae,6,Jun,3,False,0.5914,0.0
+pigeon_pea,Pigeon Pea (Arhar),Fabaceae,7,Jul,6,False,0.8901,1.0
+paddy_rice,Paddy Rice,Poaceae,7,Jul,4,False,0.7798,1.0
+upland_rice,Upland Rice,Poaceae,7,Jul,4,False,0.7798,1.0
+groundnut,Groundnut (Peanut),Fabaceae,7,Jul,4,False,0.7478,0.8478
+sunn_hemp_cover,Sunn Hemp Tropical Cover,Fabaceae,7,Jul,3,True,0.62,0.0
+grain_maize,Grain Maize,Poaceae,7,Jul,4,False,0.62,0.0
+sorghum,Sorghum (Jowar),Poaceae,7,Jul,4,False,0.62,0.0
+pearl_millet,Pearl Millet (Bajra),Poaceae,7,Jul,3,False,0.62,0.0
+black_gram,Black Gram (Urad),Fabaceae,7,Jul,3,False,0.62,0.1327
+soybean,Soybean,Fabaceae,7,Jul,4,False,0.62,0.0
+mung_bean,Mung Bean (Moong),Fabaceae,7,Jul,3,False,0.5914,0.0
+indian_mustard,Indian Mustard,Brassicaceae,8,Aug,4,False,1.0,1.0
+pigeon_pea,Pigeon Pea (Arhar),Fabaceae,8,Aug,6,False,0.9813,1.0
+paddy_rice,Paddy Rice,Poaceae,8,Aug,4,False,0.9393,0.5129
+upland_rice,Upland Rice,Poaceae,8,Aug,4,False,0.9393,0.5129
+groundnut,Groundnut (Peanut),Fabaceae,8,Aug,4,False,0.8755,1.0
+sunn_hemp_cover,Sunn Hemp Tropical Cover,Fabaceae,8,Aug,3,True,0.62,0.4372
+grain_maize,Grain Maize,Poaceae,8,Aug,4,False,0.62,0.9059
+sorghum,Sorghum (Jowar),Poaceae,8,Aug,4,False,0.62,0.0
+pearl_millet,Pearl Millet (Bajra),Poaceae,8,Aug,3,False,0.62,0.0622
+chickpea,Chickpea (Gram),Fabaceae,8,Aug,4,False,0.62,0.6795
+black_gram,Black Gram (Urad),Fabaceae,8,Aug,3,False,0.62,0.5096
+soybean,Soybean,Fabaceae,8,Aug,4,False,0.62,1.0
+mung_bean,Mung Bean (Moong),Fabaceae,8,Aug,3,False,0.5914,0.0
+pigeon_pea,Pigeon Pea (Arhar),Fabaceae,9,Sep,6,False,1.0,0.7394
+soybean,Soybean,Fabaceae,9,Sep,4,False,1.0,1.0
+groundnut,Groundnut (Peanut),Fabaceae,9,Sep,4,False,1.0,1.0
+indian_mustard,Indian Mustard,Brassicaceae,9,Sep,4,False,1.0,1.0
+upland_rice,Upland Rice,Poaceae,9,Sep,4,False,0.9154,0.0
+grain_maize,Grain Maize,Poaceae,9,Sep,4,False,0.8805,1.0
+chickpea,Chickpea (Gram),Fabaceae,9,Sep,4,False,0.8154,1.0
+black_gram,Black Gram (Urad),Fabaceae,9,Sep,3,False,0.7818,0.928
+sunn_hemp_cover,Sunn Hemp Tropical Cover,Fabaceae,9,Sep,3,True,0.7252,1.0
+sorghum,Sorghum (Jowar),Poaceae,9,Sep,4,False,0.62,0.0
+pearl_millet,Pearl Millet (Bajra),Poaceae,9,Sep,3,False,0.62,0.8623
+mung_bean,Mung Bean (Moong),Fabaceae,9,Sep,3,False,0.5914,0.6852
+sunflower,Sunflower,Asteraceae,10,Oct,4,False,1.0,0.0
+sunn_hemp_cover,Sunn Hemp Tropical Cover,Fabaceae,10,Oct,3,True,1.0,0.2041
+grain_maize,Grain Maize,Poaceae,10,Oct,4,False,1.0,0.0
+chickpea,Chickpea (Gram),Fabaceae,10,Oct,4,False,1.0,0.0
+black_gram,Black Gram (Urad),Fabaceae,10,Oct,3,False,1.0,0.0
+soybean,Soybean,Fabaceae,10,Oct,4,False,1.0,0.0
+groundnut,Groundnut (Peanut),Fabaceae,10,Oct,4,False,1.0,0.0
+buckwheat_phacelia_cover,Buckwheat & Phacelia Catch Cover,Polygonaceae,10,Oct,3,True,0.9785,0.9388
+mung_bean,Mung Bean (Moong),Fabaceae,10,Oct,3,False,0.9714,0.0
+indian_mustard,Indian Mustard,Brassicaceae,10,Oct,4,False,0.9654,0.0
+pearl_millet,Pearl Millet (Bajra),Poaceae,10,Oct,3,False,0.9367,0.7041
+pigeon_pea,Pigeon Pea (Arhar),Fabaceae,10,Oct,6,False,0.9328,0.0
+sorghum,Sorghum (Jowar),Poaceae,10,Oct,4,False,0.6892,0.0
+buckwheat_phacelia_cover,Buckwheat & Phacelia Catch Cover,Polygonaceae,11,Nov,3,True,0.9094,0.0
+pearl_millet,Pearl Millet (Bajra),Poaceae,11,Nov,3,False,0.7201,0.0
+lentil,Lentil (Masoor),Fabaceae,11,Nov,4,False,0.6823,0.0
+sorghum,Sorghum (Jowar),Poaceae,11,Nov,4,False,0.6482,0.0
+sunflower,Sunflower,Asteraceae,11,Nov,4,False,0.6294,0.0
+chickpea,Chickpea (Gram),Fabaceae,11,Nov,4,False,0.6294,0.0
+paddy_rice,Paddy Rice,Poaceae,11,Nov,4,False,0.62,0.0
+upland_rice,Upland Rice,Poaceae,11,Nov,4,False,0.62,0.0
+grain_maize,Grain Maize,Poaceae,11,Nov,4,False,0.62,0.0
+pigeon_pea,Pigeon Pea (Arhar),Fabaceae,11,Nov,6,False,0.62,0.0
+soybean,Soybean,Fabaceae,11,Nov,4,False,0.62,0.0
+groundnut,Groundnut (Peanut),Fabaceae,11,Nov,4,False,0.62,0.0
+indian_mustard,Indian Mustard,Brassicaceae,11,Nov,4,False,0.62,0.0
+sunn_hemp_cover,Sunn Hemp Tropical Cover,Fabaceae,11,Nov,3,True,0.6146,0.0
+black_gram,Black Gram (Urad),Fabaceae,11,Nov,3,False,0.6014,0.0
+mung_bean,Mung Bean (Moong),Fabaceae,11,Nov,3,False,0.5914,0.0
+pigeon_pea,Pigeon Pea (Arhar),Fabaceae,12,Dec,6,False,0.7548,0.0
+buckwheat_phacelia_cover,Buckwheat & Phacelia Catch Cover,Polygonaceae,12,Dec,3,True,0.7449,0.0
+lentil,Lentil (Masoor),Fabaceae,12,Dec,4,False,0.653,0.0
+sunflower,Sunflower,Asteraceae,12,Dec,4,False,0.62,0.0
+grain_maize,Grain Maize,Poaceae,12,Dec,4,False,0.62,0.0
+sorghum,Sorghum (Jowar),Poaceae,12,Dec,4,False,0.62,0.0
+chickpea,Chickpea (Gram),Fabaceae,12,Dec,4,False,0.62,0.0
+soybean,Soybean,Fabaceae,12,Dec,4,False,0.62,0.0
+groundnut,Groundnut (Peanut),Fabaceae,12,Dec,4,False,0.62,0.0
+indian_mustard,Indian Mustard,Brassicaceae,12,Dec,4,False,0.62,0.0
+black_gram,Black Gram (Urad),Fabaceae,12,Dec,3,False,0.6186,0.0
+sunn_hemp_cover,Sunn Hemp Tropical Cover,Fabaceae,12,Dec,3,True,0.6176,0.0
+pearl_millet,Pearl Millet (Bajra),Poaceae,12,Dec,3,False,0.6153,0.0
+mung_bean,Mung Bean (Moong),Fabaceae,12,Dec,3,False,0.5914,0.0

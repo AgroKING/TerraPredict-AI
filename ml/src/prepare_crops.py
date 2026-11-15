@@ -1,273 +1,10 @@
+import re
 from pathlib import Path
+import numpy as np
 import pandas as pd
 
 RAW_ECOCROP_PATH = Path("data/raw/ecocrop.csv")
 OUT_CROPS_PATH = Path("data/processed/crops_prepared.csv")
-
-# Format per crop_id:
-# (
-#   crop_name, scientific_name, family_fallback,
-#   cycle_months, sow_tmin, sow_tmax, vernalization_required, harvest_tmin, cool_season_cover,
-#   tmin_ovr, topmn_ovr, topmx_ovr, tmax_ovr,
-#   rmin_ovr, ropmn_ovr, ropmx_ovr, rmax_ovr,
-#   nitrogen_role, root_depth_class, waterlogging_ok, is_cover_crop, min_sowing_soilw
-# )
-GLOBAL_ECOTYPE_CATALOG = {
-    # --- Temperate / Mediterranean Winter & Spring Cereals ---
-    "winter_wheat": (
-        "Winter Wheat", "Triticum aestivum", "Poaceae",
-        10, 6.5, 16.5, True, 13.5, False,
-        -12.0, 10.0, 20.0, 28.0,
-        350.0, 500.0, 900.0, 1400.0,
-        "heavy_feeder", "medium", False, False, 0.45,
-    ),
-    "spring_wheat": (
-        "Spring Wheat", "Triticum aestivum", "Poaceae",
-        5, 6.5, 14.5, False, 14.0, False,
-        2.0, 13.0, 22.0, 30.0,
-        350.0, 500.0, 900.0, 1300.0,
-        "heavy_feeder", "medium", False, False, 0.45,
-    ),
-    "winter_barley": (
-        "Winter Barley", "Hordeum vulgare", "Poaceae",
-        10, 6.5, 16.5, True, 13.5, False,
-        -10.0, 10.0, 20.0, 28.0,
-        320.0, 480.0, 880.0, 1350.0,
-        "heavy_feeder", "medium", False, False, 0.44,
-    ),
-    "spring_barley": (
-        "Spring Barley", "Hordeum vulgare", "Poaceae",
-        5, 6.5, 14.5, False, 14.0, False,
-        2.0, 12.0, 20.0, 28.0,
-        300.0, 450.0, 850.0, 1300.0,
-        "heavy_feeder", "medium", False, False, 0.42,
-    ),
-    "winter_oats": (
-        "Winter Oats", "Avena sativa", "Poaceae",
-        10, 6.5, 16.0, True, 13.5, False,
-        -8.0, 10.0, 19.0, 27.0,
-        380.0, 520.0, 950.0, 1400.0,
-        "light_feeder", "deep", False, False, 0.44,
-    ),
-    "spring_oats": (
-        "Spring Oats", "Avena sativa", "Poaceae",
-        5, 6.5, 14.5, False, 14.0, False,
-        2.0, 11.0, 19.0, 27.0,
-        350.0, 500.0, 950.0, 1400.0,
-        "light_feeder", "deep", False, False, 0.42,
-    ),
-    "winter_rye_grain": (
-        "Winter Rye (Grain)", "Secale cereale", "Poaceae",
-        10, 6.0, 16.5, True, 13.5, False,
-        -15.0, 9.0, 19.0, 27.0,
-        300.0, 450.0, 850.0, 1300.0,
-        "heavy_feeder", "deep", False, False, 0.40,
-    ),
-
-    # --- Temperate Oilseeds & Broadleaf Break Crops ---
-    "winter_osr": (
-        "Winter Oilseed Rape", "Brassica napus", "Brassicaceae",
-        11, 11.5, 20.5, True, 13.5, False,
-        -10.0, 10.0, 20.0, 27.0,
-        400.0, 550.0, 950.0, 1400.0,
-        "heavy_feeder", "deep", False, False, 0.52,
-    ),
-    "spring_osr": (
-        "Spring Oilseed Rape", "Brassica napus", "Brassicaceae",
-        5, 7.0, 15.0, False, 14.0, False,
-        3.0, 12.0, 21.0, 28.0,
-        350.0, 480.0, 850.0, 1300.0,
-        "heavy_feeder", "deep", False, False, 0.50,
-    ),
-    "spring_linseed": (
-        "Spring Linseed (Flax)", "Linum usitatissimum", "Linaceae",
-        4, 6.5, 14.5, False, 14.0, False,
-        3.0, 12.0, 21.0, 28.0,
-        250.0, 380.0, 700.0, 1100.0,
-        "light_feeder", "shallow", False, False, 0.42,
-    ),
-    "sunflower": (
-        "Sunflower", "Helianthus annuus", "Asteraceae",
-        4, 12.0, 26.0, False, 16.0, False,
-        6.0, 17.0, 27.0, 35.0,
-        300.0, 450.0, 800.0, 1200.0,
-        "heavy_feeder", "deep", False, False, 0.45,
-    ),
-    "sugar_beet": (
-        "Sugar Beet", "Beta vulgaris", "Amaranthaceae",
-        7, 7.0, 15.0, False, 12.0, False,
-        2.0, 13.0, 22.0, 30.0,
-        450.0, 600.0, 950.0, 1350.0,
-        "heavy_feeder", "deep", False, False, 0.50,
-    ),
-    "potato": (
-        "Potato", "Solanum tuberosum", "Solanaceae",
-        4, 8.0, 18.0, False, 14.0, False,
-        4.0, 14.0, 22.0, 29.0,
-        450.0, 600.0, 1000.0, 1400.0,
-        "heavy_feeder", "shallow", False, False, 0.52,
-    ),
-
-    # --- Temperate Legumes (Winter vs Spring) ---
-    "winter_field_beans": (
-        "Winter Field Beans", "Vicia faba", "Fabaceae",
-        10, 6.5, 14.5, True, 13.5, False,
-        -8.0, 9.0, 19.0, 26.0,
-        400.0, 550.0, 950.0, 1400.0,
-        "fixer", "deep", False, False, 0.48,
-    ),
-    "spring_field_beans": (
-        "Spring Field Beans", "Vicia faba", "Fabaceae",
-        5, 6.5, 14.5, False, 14.0, False,
-        2.0, 10.0, 19.0, 26.0,
-        350.0, 500.0, 900.0, 1350.0,
-        "fixer", "deep", False, False, 0.48,
-    ),
-    "winter_field_pea": (
-        "Winter Field Pea", "Pisum sativum", "Fabaceae",
-        9, 6.5, 14.5, True, 13.5, False,
-        -7.0, 9.0, 18.0, 25.0,
-        350.0, 480.0, 850.0, 1300.0,
-        "fixer", "shallow", False, False, 0.46,
-    ),
-    "spring_field_pea": (
-        "Spring Combining Pea", "Pisum sativum", "Fabaceae",
-        4, 6.5, 14.5, False, 14.0, False,
-        2.0, 11.0, 19.0, 26.0,
-        300.0, 420.0, 800.0, 1200.0,
-        "fixer", "shallow", False, False, 0.45,
-    ),
-
-    # --- Cover Crops & Green Manures (Purpose-Differentiated) ---
-    "rye_vetch_cover": (
-        "Winter Rye & Vetch Cover", "Secale cereale", "Poaceae",
-        5, 7.0, 16.0, False, 4.0, True,
-        -12.0, 5.0, 16.0, 25.0,
-        250.0, 400.0, 900.0, 1400.0,
-        "fixer", "deep", True, True, 0.42,
-    ),
-    "mustard_biofumigant_cover": (
-        "Mustard Biofumigant Cover", "Sinapis alba", "Brassicaceae",
-        3, 9.0, 20.0, False, 5.0, True,
-        -4.0, 8.0, 18.0, 26.0,
-        220.0, 350.0, 800.0, 1300.0,
-        "light_feeder", "deep", False, True, 0.44,
-    ),
-    "buckwheat_phacelia_cover": (
-        "Buckwheat & Phacelia Catch Cover", "Fagopyrum esculentum", "Polygonaceae",
-        3, 12.0, 26.0, False, 10.0, False,
-        5.0, 14.0, 24.0, 32.0,
-        200.0, 350.0, 800.0, 1300.0,
-        "light_feeder", "shallow", False, True, 0.40,
-    ),
-    "crimson_clover_cover": (
-        "Crimson Clover Cover", "Trifolium incarnatum", "Fabaceae",
-        5, 8.0, 18.0, False, 5.0, True,
-        -8.0, 7.0, 18.0, 26.0,
-        280.0, 420.0, 850.0, 1300.0,
-        "fixer", "medium", False, True, 0.44,
-    ),
-    "sunn_hemp_cover": (
-        "Sunn Hemp Tropical Cover", "Crotalaria juncea", "Fabaceae",
-        3, 20.0, 35.0, False, 18.0, False,
-        14.0, 22.0, 32.0, 38.0,
-        300.0, 500.0, 1200.0, 2000.0,
-        "fixer", "deep", False, True, 0.45,
-    ),
-
-    # --- Tropical & Subtropical Cereals, Pulses & Oilseeds ---
-    "paddy_rice": (
-        "Paddy Rice", "Oryza sativa", "Poaceae",
-        4, 22.0, 35.0, False, 22.0, False,
-        15.0, 24.0, 33.0, 40.0,
-        900.0, 1200.0, 2500.0, 4000.0,
-        "heavy_feeder", "shallow", True, False, 0.68,
-    ),
-    "upland_rice": (
-        "Upland Rice", "Oryza sativa", "Poaceae",
-        4, 21.0, 34.0, False, 21.0, False,
-        15.0, 23.0, 32.0, 38.0,
-        650.0, 900.0, 1800.0, 2800.0,
-        "heavy_feeder", "medium", False, False, 0.55,
-    ),
-    "grain_maize": (
-        "Grain Maize", "Zea mays", "Poaceae",
-        4, 15.0, 32.0, False, 17.0, False,
-        10.0, 20.0, 30.0, 37.0,
-        450.0, 600.0, 1100.0, 1700.0,
-        "heavy_feeder", "deep", False, False, 0.50,
-    ),
-    "sorghum": (
-        "Sorghum (Jowar)", "Sorghum bicolor", "Poaceae",
-        4, 18.0, 35.0, False, 18.0, False,
-        12.0, 22.0, 32.0, 40.0,
-        300.0, 450.0, 850.0, 1300.0,
-        "light_feeder", "deep", False, False, 0.42,
-    ),
-    "pearl_millet": (
-        "Pearl Millet (Bajra)", "Pennisetum glaucum", "Poaceae",
-        3, 20.0, 36.0, False, 20.0, False,
-        14.0, 24.0, 34.0, 42.0,
-        200.0, 320.0, 700.0, 1100.0,
-        "light_feeder", "deep", False, False, 0.38,
-    ),
-    "chickpea": (
-        "Chickpea (Gram)", "Cicer arietinum", "Fabaceae",
-        4, 15.0, 28.0, False, 17.0, False,
-        7.0, 17.0, 26.0, 34.0,
-        150.0, 280.0, 650.0, 1050.0,
-        "fixer", "deep", False, False, 0.42,
-    ),
-    "pigeon_pea": (
-        "Pigeon Pea (Arhar)", "Cajanus cajan", "Fabaceae",
-        6, 20.0, 34.0, False, 18.0, False,
-        12.0, 22.0, 31.0, 38.0,
-        450.0, 650.0, 1200.0, 1800.0,
-        "fixer", "deep", False, False, 0.48,
-    ),
-    "mung_bean": (
-        "Mung Bean (Moong)", "Vigna radiata", "Fabaceae",
-        3, 20.0, 35.0, False, 20.0, False,
-        14.0, 23.0, 32.0, 39.0,
-        250.0, 400.0, 850.0, 1300.0,
-        "fixer", "shallow", False, False, 0.42,
-    ),
-    "black_gram": (
-        "Black Gram (Urad)", "Vigna mungo", "Fabaceae",
-        3, 20.0, 35.0, False, 20.0, False,
-        14.0, 23.0, 32.0, 39.0,
-        280.0, 450.0, 900.0, 1400.0,
-        "fixer", "shallow", False, False, 0.44,
-    ),
-    "lentil": (
-        "Lentil (Masoor)", "Lens culinaris", "Fabaceae",
-        4, 10.0, 24.0, False, 15.0, False,
-        4.0, 14.0, 23.0, 31.0,
-        180.0, 300.0, 650.0, 1000.0,
-        "fixer", "shallow", False, False, 0.40,
-    ),
-    "soybean": (
-        "Soybean", "Glycine max", "Fabaceae",
-        4, 16.0, 32.0, False, 17.0, False,
-        10.0, 20.0, 29.0, 36.0,
-        450.0, 600.0, 1100.0, 1600.0,
-        "fixer", "medium", False, False, 0.50,
-    ),
-    "groundnut": (
-        "Groundnut (Peanut)", "Arachis hypogaea", "Fabaceae",
-        4, 20.0, 34.0, False, 20.0, False,
-        14.0, 23.0, 32.0, 38.0,
-        400.0, 550.0, 1050.0, 1500.0,
-        "fixer", "shallow", False, False, 0.48,
-    ),
-    "indian_mustard": (
-        "Indian Mustard", "Brassica juncea", "Brassicaceae",
-        4, 14.0, 28.0, False, 16.0, False,
-        6.0, 16.0, 25.0, 33.0,
-        150.0, 280.0, 650.0, 1100.0,
-        "heavy_feeder", "deep", False, False, 0.44,
-    ),
-}
 
 ECOCROP_NUM_COLS = [
     "TMIN", "TOPMN", "TOPMX", "TMAX",
@@ -276,11 +13,71 @@ ECOCROP_NUM_COLS = [
     "GMIN", "GMAX",
 ]
 
+ALLOWED_CAT_TOKENS = (
+    "cereal", "pseudocereal", "pulse", "legume", "oil", "root", "tuber",
+    "vegetable", "fibre", "fiber", "forage", "pasture", "spice", "condiment",
+    "cover", "green manure", "sugar", "beverage",
+)
+BLOCKED_CAT_TOKENS = (
+    "forest", "timber", "ornamental", "wood", "tree", "bamboo", "palms", "rubber",
+)
+
+# Agronomic role refinements for major global staples (keeps 100% of EcoCrop climate/pH/cycle bounds)
+SPECIES_AGRONOMIC_OVERRIDES = {
+    "triticum aestivum": {"crop_id": "spring_wheat", "crop_name": "Spring Wheat", "nitrogen_role": "heavy_feeder", "root_depth_class": "medium", "min_sowing_soilw": 0.45},
+    "hordeum vulgare": {"crop_id": "spring_barley", "crop_name": "Spring Barley", "nitrogen_role": "heavy_feeder", "root_depth_class": "medium", "min_sowing_soilw": 0.42},
+    "avena sativa": {"crop_id": "spring_oats", "crop_name": "Spring Oats", "nitrogen_role": "light_feeder", "root_depth_class": "deep", "min_sowing_soilw": 0.42},
+    "brassica napus": {"crop_id": "spring_osr", "crop_name": "Spring Oilseed Rape", "nitrogen_role": "heavy_feeder", "root_depth_class": "deep", "min_sowing_soilw": 0.50},
+    "vicia faba": {"crop_id": "spring_field_beans", "crop_name": "Spring Field Beans", "nitrogen_role": "fixer", "root_depth_class": "deep", "min_sowing_soilw": 0.48},
+    "pisum sativum": {"crop_id": "spring_field_pea", "crop_name": "Spring Combining Pea", "nitrogen_role": "fixer", "root_depth_class": "shallow", "min_sowing_soilw": 0.45},
+    "oryza sativa": {"crop_id": "paddy_rice", "crop_name": "Paddy Rice", "nitrogen_role": "heavy_feeder", "root_depth_class": "shallow", "waterlogging_ok": True, "min_sowing_soilw": 0.66},
+    "zea mays": {"crop_id": "grain_maize", "crop_name": "Grain Maize", "nitrogen_role": "heavy_feeder", "root_depth_class": "deep", "min_sowing_soilw": 0.48},
+    "sorghum bicolor": {"crop_id": "sorghum", "crop_name": "Sorghum (Jowar)", "nitrogen_role": "light_feeder", "root_depth_class": "deep", "min_sowing_soilw": 0.40},
+    "pennisetum glaucum": {"crop_id": "pearl_millet", "crop_name": "Pearl Millet (Bajra)", "nitrogen_role": "light_feeder", "root_depth_class": "deep", "min_sowing_soilw": 0.38},
+    "eleusine coracana": {"crop_id": "finger_millet", "crop_name": "Finger Millet (Ragi)", "nitrogen_role": "light_feeder", "root_depth_class": "medium", "min_sowing_soilw": 0.42},
+    "cicer arietinum": {"crop_id": "chickpea", "crop_name": "Chickpea (Gram)", "nitrogen_role": "fixer", "root_depth_class": "deep", "min_sowing_soilw": 0.40},
+    "cajanus cajan": {"crop_id": "pigeon_pea", "crop_name": "Pigeon Pea (Arhar)", "nitrogen_role": "fixer", "root_depth_class": "deep", "min_sowing_soilw": 0.46},
+    "vigna radiata": {"crop_id": "mung_bean", "crop_name": "Mung Bean (Moong)", "nitrogen_role": "fixer", "root_depth_class": "shallow", "min_sowing_soilw": 0.42},
+    "vigna mungo": {"crop_id": "black_gram", "crop_name": "Black Gram (Urad)", "nitrogen_role": "fixer", "root_depth_class": "shallow", "min_sowing_soilw": 0.44},
+    "lens culinaris": {"crop_id": "lentil", "crop_name": "Lentil (Masoor)", "nitrogen_role": "fixer", "root_depth_class": "shallow", "min_sowing_soilw": 0.40},
+    "glycine max": {"crop_id": "soybean", "crop_name": "Soybean", "nitrogen_role": "fixer", "root_depth_class": "medium", "min_sowing_soilw": 0.48},
+    "arachis hypogaea": {"crop_id": "groundnut", "crop_name": "Groundnut (Peanut)", "nitrogen_role": "fixer", "root_depth_class": "shallow", "min_sowing_soilw": 0.46},
+    "phaseolus vulgaris": {"crop_id": "common_bean", "crop_name": "Common Bean", "nitrogen_role": "fixer", "root_depth_class": "shallow", "min_sowing_soilw": 0.44},
+    "vigna unguiculata": {"crop_id": "cowpea", "crop_name": "Cowpea", "nitrogen_role": "fixer", "root_depth_class": "deep", "min_sowing_soilw": 0.40},
+    "brassica juncea": {"crop_id": "indian_mustard", "crop_name": "Indian Mustard", "nitrogen_role": "heavy_feeder", "root_depth_class": "deep", "min_sowing_soilw": 0.44},
+    "sesamum indicum": {"crop_id": "sesame", "crop_name": "Sesame", "nitrogen_role": "light_feeder", "root_depth_class": "deep", "min_sowing_soilw": 0.40},
+    "helianthus annuus": {"crop_id": "sunflower", "crop_name": "Sunflower", "nitrogen_role": "heavy_feeder", "root_depth_class": "deep", "min_sowing_soilw": 0.44},
+    "linum usitatissimum": {"crop_id": "spring_linseed", "crop_name": "Linseed (Flax)", "nitrogen_role": "light_feeder", "root_depth_class": "shallow", "min_sowing_soilw": 0.42},
+    "gossypium hirsutum": {"crop_id": "upland_cotton", "crop_name": "Upland Cotton", "nitrogen_role": "heavy_feeder", "root_depth_class": "deep", "min_sowing_soilw": 0.46},
+    "manihot esculenta": {"crop_id": "cassava", "crop_name": "Cassava", "nitrogen_role": "heavy_feeder", "root_depth_class": "deep", "min_sowing_soilw": 0.48},
+    "ipomoea batatas": {"crop_id": "sweet_potato", "crop_name": "Sweet Potato", "nitrogen_role": "light_feeder", "root_depth_class": "shallow", "min_sowing_soilw": 0.46},
+    "solanum tuberosum": {"crop_id": "potato", "crop_name": "Potato", "nitrogen_role": "heavy_feeder", "root_depth_class": "shallow", "min_sowing_soilw": 0.50},
+    "beta vulgaris": {"crop_id": "sugar_beet", "crop_name": "Sugar Beet", "nitrogen_role": "heavy_feeder", "root_depth_class": "deep", "min_sowing_soilw": 0.50},
+    "chenopodium quinoa": {"crop_id": "quinoa", "crop_name": "Quinoa", "nitrogen_role": "light_feeder", "root_depth_class": "deep", "min_sowing_soilw": 0.38},
+}
+
+# Vernalizing winter ecotypes & dedicated cover crops (EcoCrop only lists spring/annual bounds)
+VERNALIZING_AND_COVER_ECOTYPES = [
+    # (crop_id, crop_name, scientific_name, family, cycle_months, sow_tmin, sow_tmax, vern_req, harvest_tmin, cool_cover,
+    #  tmin, topmn, topmx, tmax, rmin, ropmn, ropmx, rmax, n_role, root_cls, water_ok, is_cover, min_soilw)
+    ("winter_wheat", "Winter Wheat", "Triticum aestivum", "Poaceae", 10, 6.5, 16.5, True, 13.5, False, -12.0, 10.0, 20.0, 28.0, 350.0, 500.0, 900.0, 1400.0, "heavy_feeder", "medium", False, False, 0.45),
+    ("winter_barley", "Winter Barley", "Hordeum vulgare", "Poaceae", 10, 6.5, 16.5, True, 13.5, False, -10.0, 10.0, 20.0, 28.0, 320.0, 480.0, 880.0, 1350.0, "heavy_feeder", "medium", False, False, 0.44),
+    ("winter_oats", "Winter Oats", "Avena sativa", "Poaceae", 10, 6.5, 16.0, True, 13.5, False, -8.0, 10.0, 19.0, 27.0, 380.0, 520.0, 950.0, 1400.0, "light_feeder", "deep", False, False, 0.44),
+    ("winter_rye_grain", "Winter Rye (Grain)", "Secale cereale", "Poaceae", 10, 6.0, 16.5, True, 13.5, False, -15.0, 9.0, 19.0, 27.0, 300.0, 450.0, 850.0, 1300.0, "heavy_feeder", "deep", False, False, 0.40),
+    ("winter_osr", "Winter Oilseed Rape", "Brassica napus", "Brassicaceae", 11, 11.5, 20.5, True, 13.5, False, -10.0, 10.0, 20.0, 27.0, 400.0, 550.0, 950.0, 1400.0, "heavy_feeder", "deep", False, False, 0.52),
+    ("winter_field_beans", "Winter Field Beans", "Vicia faba", "Fabaceae", 10, 6.5, 14.5, True, 13.5, False, -8.0, 9.0, 19.0, 26.0, 400.0, 550.0, 950.0, 1400.0, "fixer", "deep", False, False, 0.48),
+    ("winter_field_pea", "Winter Field Pea", "Pisum sativum", "Fabaceae", 9, 6.5, 14.5, True, 13.5, False, -7.0, 9.0, 18.0, 25.0, 350.0, 480.0, 850.0, 1300.0, "fixer", "shallow", False, False, 0.46),
+    ("rye_vetch_cover", "Winter Rye & Vetch Cover", "Secale cereale", "Poaceae", 5, 7.0, 16.0, False, 4.0, True, -12.0, 5.0, 16.0, 25.0, 250.0, 400.0, 900.0, 1400.0, "fixer", "deep", True, True, 0.42),
+    ("mustard_biofumigant_cover", "Mustard Biofumigant Cover", "Sinapis alba", "Brassicaceae", 3, 9.0, 20.0, False, 5.0, True, -4.0, 8.0, 18.0, 26.0, 220.0, 350.0, 800.0, 1300.0, "light_feeder", "deep", False, True, 0.44),
+    ("buckwheat_phacelia_cover", "Buckwheat & Phacelia Catch Cover", "Fagopyrum esculentum", "Polygonaceae", 3, 12.0, 26.0, False, 10.0, False, 5.0, 14.0, 24.0, 32.0, 200.0, 350.0, 800.0, 1300.0, "light_feeder", "shallow", False, True, 0.40),
+    ("crimson_clover_cover", "Crimson Clover Cover", "Trifolium incarnatum", "Fabaceae", 5, 8.0, 18.0, False, 5.0, True, -8.0, 7.0, 18.0, 26.0, 280.0, 420.0, 850.0, 1300.0, "fixer", "medium", False, True, 0.44),
+    ("sunn_hemp_cover", "Sunn Hemp Tropical Cover", "Crotalaria juncea", "Fabaceae", 3, 20.0, 35.0, False, 18.0, False, 14.0, 22.0, 32.0, 38.0, 300.0, 500.0, 1200.0, 2000.0, "fixer", "deep", False, True, 0.45),
+]
+
 
 def load_raw_ecocrop(path: Path) -> pd.DataFrame:
     if not path.exists():
-        print(f"[WARN] {path} not found; using catalog physiological bounds.")
-        return pd.DataFrame()
+        raise FileNotFoundError(f"FAO EcoCrop database not found at {path}")
     for enc in ("utf-8", "cp1252", "latin1"):
         try:
             df = pd.read_csv(path, encoding=enc)
@@ -288,81 +85,106 @@ def load_raw_ecocrop(path: Path) -> pd.DataFrame:
             for col in ECOCROP_NUM_COLS:
                 if col in df.columns:
                     df[col] = pd.to_numeric(df[col], errors="coerce")
-            if "SCIENTIFICNAME" in df.columns:
-                df["SCI_CLEAN"] = df["SCIENTIFICNAME"].astype(str).str.strip().str.lower()
+            sci_col = "SCIENTIFICNAME" if "SCIENTIFICNAME" in df.columns else "SCI_NAME"
+            df["SCI_CLEAN"] = df[sci_col].astype(str).str.strip()
+            df["SCI_LOWER"] = df["SCI_CLEAN"].str.lower()
             return df
         except UnicodeDecodeError:
             continue
     raise ValueError(f"Unable to decode {path} with utf-8, cp1252, or latin1.")
 
 
-def _pick_val(row: pd.Series | None, col: str, fallback: float) -> float:
-    if row is not None and col in row and pd.notna(row[col]):
-        return float(row[col])
-    return float(fallback)
+def _is_rotational_crop(row: pd.Series) -> bool:
+    for col in ("TMIN", "TOPMN", "TOPMX", "TMAX", "RMIN", "ROPMN", "ROPMX", "RMAX"):
+        if col not in row or pd.isna(row[col]):
+            return False
+    gmax = float(row["GMAX"]) if "GMAX" in row and pd.notna(row["GMAX"]) else 180.0
+    if not (45.0 <= gmax <= 365.0):
+        return False
+
+    cat = str(row.get("CAT", row.get("CATEGORY", ""))).lower()
+    if any(tok in cat for tok in BLOCKED_CAT_TOKENS):
+        return False
+    if cat and cat != "nan" and not any(tok in cat for tok in ALLOWED_CAT_TOKENS):
+        return False
+    return True
 
 
-def build_prepared_crops() -> pd.DataFrame:
-    raw_df = load_raw_ecocrop(RAW_ECOCROP_PATH)
+def build_prepared_crops(raw_path: Path = RAW_ECOCROP_PATH) -> pd.DataFrame:
+    raw_df = load_raw_ecocrop(raw_path)
+
+    # Deduplicate by scientific name, preferring rows with complete GMIN/GMAX/PH data
+    raw_df["_completeness"] = raw_df[ECOCROP_NUM_COLS].notna().sum(axis=1)
+    raw_df = raw_df.sort_values("_completeness", ascending=False).drop_duplicates(subset=["SCI_LOWER"], keep="first")
+
+    # Index pH/Family lookup across all EcoCrop rows for ecotype splitting
+    eco_lookup = raw_df.set_index("SCI_LOWER")
+
     records = []
+    seen_ids = set()
 
-    for crop_id, meta in GLOBAL_ECOTYPE_CATALOG.items():
-        (
-            crop_name, sci_name, fam_fallback,
-            cycle_months, sow_tmin, sow_tmax, vern_req, harvest_tmin, cool_cover,
-            tmin_o, topmn_o, topmx_o, tmax_o,
-            rmin_o, ropmn_o, ropmx_o, rmax_o,
-            n_role, root_cls, water_ok, is_cover, min_soilw,
-        ) = meta
+    # 1. Auto-ingest all valid rotational crops directly from EcoCrop
+    viable_df = raw_df[raw_df.apply(_is_rotational_crop, axis=1)]
+    for _, row in viable_df.iterrows():
+        sci = row["SCI_CLEAN"]
+        sci_low = row["SCI_LOWER"]
+        if not sci or sci_low in ("nan", "none"):
+            continue
 
-        eco_row = None
-        if not raw_df.empty and "SCI_CLEAN" in raw_df.columns:
-            matches = raw_df[raw_df["SCI_CLEAN"] == sci_name.lower()]
-            if not matches.empty:
-                eco_row = matches.iloc[0]
+        fam = str(row.get("FAMILY", "Unknown")).strip()
+        if not fam or fam.lower() == "nan":
+            fam = "Unknown"
+        cat = str(row.get("CAT", row.get("CATEGORY", ""))).strip().lower()
+        com_raw = str(row.get("COMNAME", row.get("COMMON_NAME", ""))).strip()
+        common_name = com_raw.split(",")[0].strip().title() if com_raw and com_raw.lower() != "nan" else sci
 
-        family = fam_fallback
-        if eco_row is not None and "FAMILY" in eco_row and pd.notna(eco_row["FAMILY"]):
-            fam_str = str(eco_row["FAMILY"]).strip()
-            if fam_str and fam_str.lower() != "nan":
-                family = fam_str
+        tmin, topmn, topmx, tmax = float(row["TMIN"]), float(row["TOPMN"]), float(row["TOPMX"]), float(row["TMAX"])
+        rmin, ropmn, ropmx, rmax = float(row["RMIN"]), float(row["ROPMN"]), float(row["ROPMX"]), float(row["RMAX"])
+        gmin = float(row["GMIN"]) if pd.notna(row.get("GMIN")) else 90.0
+        gmax = float(row["GMAX"]) if pd.notna(row.get("GMAX")) else 150.0
 
-        genus = sci_name.split()[0]
+        # Derive cycle length & sowing thermal gates mathematically from EcoCrop
+        cycle_months = int(max(2, min(11, round((0.5 * (gmin + gmax)) / 30.0))))
+        sow_tmin = round(max(4.5, tmin + 0.30 * (topmn - tmin)), 1)
+        sow_tmax = round(min(36.0, topmx + 0.15 * (tmax - topmx)), 1)
+        harvest_tmin = round(max(10.0, tmin + 0.45 * (topmn - tmin)), 1)
 
-        # For vernalizing winter ecotypes, use ecotype cold/vernalization overrides
-        # while pulling pH and non-overridden bounds directly from EcoCrop.
-        if vern_req or is_cover:
-            tmin, topmn, topmx, tmax = tmin_o, topmn_o, topmx_o, tmax_o
-            rmin, ropmn, ropmx, rmax = rmin_o, ropmn_o, ropmx_o, rmax_o
+        fam_low = fam.lower()
+        if "fabaceae" in fam_low or "leguminosae" in fam_low or "pulse" in cat or "legume" in cat:
+            n_role = "fixer"
+        elif any(k in cat for k in ("root", "tuber", "cereal", "oil", "fibre", "fiber", "vegetable")):
+            n_role = "heavy_feeder"
         else:
-            tmin = _pick_val(eco_row, "TMIN", tmin_o)
-            topmn = _pick_val(eco_row, "TOPMN", topmn_o)
-            topmx = _pick_val(eco_row, "TOPMX", topmx_o)
-            tmax = _pick_val(eco_row, "TMAX", tmax_o)
-            rmin = _pick_val(eco_row, "RMIN", rmin_o)
-            ropmn = _pick_val(eco_row, "ROPMN", ropmn_o)
-            ropmx = _pick_val(eco_row, "ROPMX", ropmx_o)
-            rmax = _pick_val(eco_row, "RMAX", rmax_o)
+            n_role = "light_feeder"
 
-        phmin = _pick_val(eco_row, "PHMIN", 5.5)
-        phopmn = _pick_val(eco_row, "PHOPMN", 6.0)
-        phopmx = _pick_val(eco_row, "PHOPMX", 7.5)
-        phmax = _pick_val(eco_row, "PHMAX", 8.2)
-        gmin = _pick_val(eco_row, "GMIN", cycle_months * 30 - 15)
-        gmax = _pick_val(eco_row, "GMAX", cycle_months * 30 + 15)
+        if any(k in cat for k in ("root", "tuber", "vegetable")):
+            root_cls = "shallow"
+        elif ropmn <= 500.0 or "oil" in cat or "fibre" in cat:
+            root_cls = "deep"
+        else:
+            root_cls = "medium"
+
+        water_ok = bool(ropmn >= 1100.0 and rmax >= 2800.0)
+        min_soilw = round(float(np.clip(0.36 + (ropmn / 3500.0) * 0.32, 0.38, 0.68)), 2)
+
+        ovr = SPECIES_AGRONOMIC_OVERRIDES.get(sci_low, {})
+        crop_id = ovr.get("crop_id", re.sub(r"[^a-z0-9]+", "_", sci_low).strip("_"))
+        if crop_id in seen_ids:
+            continue
+        seen_ids.add(crop_id)
 
         records.append({
             "crop_id": crop_id,
-            "crop_name": crop_name,
-            "scientific_name": sci_name,
-            "genus": genus,
-            "family": family,
-            "cycle_months": int(cycle_months),
-            "sow_tmin": float(sow_tmin),
-            "sow_tmax": float(sow_tmax),
-            "vernalization_required": bool(vern_req),
-            "harvest_tmin": float(harvest_tmin),
-            "cool_season_cover": bool(cool_cover),
+            "crop_name": ovr.get("crop_name", common_name),
+            "scientific_name": sci,
+            "genus": sci.split()[0],
+            "family": fam,
+            "cycle_months": int(ovr.get("cycle_months", cycle_months)),
+            "sow_tmin": float(ovr.get("sow_tmin", sow_tmin)),
+            "sow_tmax": float(ovr.get("sow_tmax", sow_tmax)),
+            "vernalization_required": False,
+            "harvest_tmin": float(ovr.get("harvest_tmin", harvest_tmin)),
+            "cool_season_cover": False,
             "tmin": tmin,
             "topmn": topmn,
             "topmx": topmx,
@@ -371,12 +193,64 @@ def build_prepared_crops() -> pd.DataFrame:
             "ropmn": ropmn,
             "ropmx": ropmx,
             "rmax": rmax,
+            "phmin": float(row["PHMIN"]) if pd.notna(row.get("PHMIN")) else 5.5,
+            "phopmn": float(row["PHOPMN"]) if pd.notna(row.get("PHOPMN")) else 6.0,
+            "phopmx": float(row["PHOPMX"]) if pd.notna(row.get("PHOPMX")) else 7.5,
+            "phmax": float(row["PHMAX"]) if pd.notna(row.get("PHMAX")) else 8.2,
+            "gmin": gmin,
+            "gmax": gmax,
+            "nitrogen_role": ovr.get("nitrogen_role", n_role),
+            "root_depth_class": ovr.get("root_depth_class", root_cls),
+            "waterlogging_ok": bool(ovr.get("waterlogging_ok", water_ok)),
+            "is_cover_crop": False,
+            "min_sowing_soilw": float(ovr.get("min_sowing_soilw", min_soilw)),
+        })
+
+    # 2. Add vernalizing winter ecotypes & dedicated cover crops (pulling pH & family from EcoCrop)
+    for meta in VERNALIZING_AND_COVER_ECOTYPES:
+        (
+            crop_id, crop_name, sci_name, fam_fb, cycle_months,
+            sow_tmin, sow_tmax, vern_req, harvest_tmin, cool_cover,
+            tmin, topmn, topmx, tmax, rmin, ropmn, ropmx, rmax,
+            n_role, root_cls, water_ok, is_cover, min_soilw,
+        ) = meta
+        if crop_id in seen_ids:
+            continue
+        seen_ids.add(crop_id)
+
+        eco_r = eco_lookup.loc[sci_name.lower()] if sci_name.lower() in eco_lookup.index else None
+        fam = str(eco_r["FAMILY"]).strip() if (eco_r is not None and pd.notna(eco_r.get("FAMILY"))) else fam_fb
+        phmin = float(eco_r["PHMIN"]) if (eco_r is not None and pd.notna(eco_r.get("PHMIN"))) else 5.5
+        phopmn = float(eco_r["PHOPMN"]) if (eco_r is not None and pd.notna(eco_r.get("PHOPMN"))) else 6.0
+        phopmx = float(eco_r["PHOPMX"]) if (eco_r is not None and pd.notna(eco_r.get("PHOPMX"))) else 7.5
+        phmax = float(eco_r["PHMAX"]) if (eco_r is not None and pd.notna(eco_r.get("PHMAX"))) else 8.2
+
+        records.append({
+            "crop_id": crop_id,
+            "crop_name": crop_name,
+            "scientific_name": sci_name,
+            "genus": sci_name.split()[0],
+            "family": fam,
+            "cycle_months": int(cycle_months),
+            "sow_tmin": float(sow_tmin),
+            "sow_tmax": float(sow_tmax),
+            "vernalization_required": bool(vern_req),
+            "harvest_tmin": float(harvest_tmin),
+            "cool_season_cover": bool(cool_cover),
+            "tmin": float(tmin),
+            "topmn": float(topmn),
+            "topmx": float(topmx),
+            "tmax": float(tmax),
+            "rmin": float(rmin),
+            "ropmn": float(ropmn),
+            "ropmx": float(ropmx),
+            "rmax": float(rmax),
             "phmin": phmin,
             "phopmn": phopmn,
             "phopmx": phopmx,
             "phmax": phmax,
-            "gmin": gmin,
-            "gmax": gmax,
+            "gmin": float(cycle_months * 30 - 15),
+            "gmax": float(cycle_months * 30 + 15),
             "nitrogen_role": n_role,
             "root_depth_class": root_cls,
             "waterlogging_ok": bool(water_ok),
@@ -391,7 +265,7 @@ def main() -> None:
     df = build_prepared_crops()
     OUT_CROPS_PATH.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(OUT_CROPS_PATH, index=False)
-    print(f"Prepared {len(df)} global crop ecotypes -> {OUT_CROPS_PATH}")
+    print(f"Prepared {len(df)} global crop & ecotype profiles from {RAW_ECOCROP_PATH} -> {OUT_CROPS_PATH}")
 
 
 if __name__ == "__main__":
