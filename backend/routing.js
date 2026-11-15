@@ -2,7 +2,7 @@ import "dotenv/config";
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
-import { enrichCropsWithImages } from "./imageResolver.js";
+import { enrichCropsWithImages, resolveCropImage } from "./imageResolver.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -329,6 +329,23 @@ app.post("/api/site-telemetry", async (req, res) => {
     const normalized = normalizeMl(mlData);
     try {
       await enrichCropsWithImages(normalized.crops);
+      if (normalized.strategies) {
+        for (const strat of Object.values(normalized.strategies)) {
+          if (Array.isArray(strat?.schedule)) {
+            await Promise.all(
+              strat.schedule.map(async (item) => {
+                try {
+                  item.image = await resolveCropImage({
+                    id: item.crop_id,
+                    name: item.crop_name,
+                    scientificName: item.scientific_name,
+                  });
+                } catch {}
+              })
+            );
+          }
+        }
+      }
     } catch (imgErr) {
       console.warn("Failed to enrich crop images:", imgErr.message);
     }
