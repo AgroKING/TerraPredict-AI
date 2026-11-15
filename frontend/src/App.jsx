@@ -43,7 +43,7 @@ const SPECTRAL_GRADIENT =
 const SPECTRAL_LAYERS = [
   {
     id: 'temperature',
-    name: 'Land Surface Temp',
+    name: 'Field Warmth & Heat',
     dataset: 'MODIS Terra / ECOSTRESS',
     icon: Thermometer,
     unit: '-20°C to 45°C',
@@ -54,10 +54,10 @@ const SPECTRAL_LAYERS = [
   },
   {
     id: 'soil-moisture',
-    name: 'Soil Moisture',
+    name: 'Soil Wetness (Moisture)',
     dataset: 'NASA SMAP L4',
     icon: Droplets,
-    unit: '0.05 to 0.50 m³/m³',
+    unit: 'Dry (0.05) → Wet (0.50)',
     gradient: 'linear-gradient(90deg, #92400e, #f59e0b, #38bdf8, #1d4ed8)',
     buildUrl: (date) =>
       `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/SMAP_L4_Analyzed_Surface_Soil_Moisture/default/${date}/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png`,
@@ -65,7 +65,7 @@ const SPECTRAL_LAYERS = [
   },
   {
     id: 'rainfall',
-    name: 'Precipitation & Rain',
+    name: 'Rainfall Pattern',
     dataset: 'NASA GPM IMERG',
     icon: CloudRain,
     unit: '0 to 50+ mm/day',
@@ -76,10 +76,10 @@ const SPECTRAL_LAYERS = [
   },
   {
     id: 'vegetation',
-    name: 'Vegetation Stress (NDVI)',
+    name: 'Plant Health & Greenery',
     dataset: 'MODIS / Landsat',
     icon: Sprout,
-    unit: 'Stressed (-0.1) → Lush (0.9)',
+    unit: 'Stressed (-0.1) → Lush Green (0.9)',
     gradient: 'linear-gradient(90deg, #78350f, #d97706, #bef264, #15803d)',
     buildUrl: (date) =>
       `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_NDVI_8Day/default/${date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png`,
@@ -87,7 +87,7 @@ const SPECTRAL_LAYERS = [
   },
   {
     id: 'water-trends',
-    name: 'Long-Term Water Trends',
+    name: 'Deep Groundwater Level',
     dataset: 'GRACE / GRACE-FO',
     icon: Waves,
     unit: 'Deficit (-30cm) → Surplus (+30cm)',
@@ -98,7 +98,7 @@ const SPECTRAL_LAYERS = [
   },
   {
     id: 'elevation',
-    name: 'Terrain & Elevation',
+    name: 'Field Elevation & Drainage',
     dataset: 'NASA SRTM DEM',
     icon: Mountain,
     unit: '0m → 6,000m+',
@@ -852,9 +852,9 @@ export default function App() {
         <aside className="spectral-dashboard">
           <div className="spectral-header">
             <Layers size={17} />
-            <h3>Spectral Overlays</h3>
+            <h3>Field Satellite Maps</h3>
           </div>
-          <p className="spectral-sub">Wrap NASA datasets around the globe</p>
+          <p className="spectral-sub">Tap to view live satellite weather & soil maps</p>
 
           <div className="spectral-list">
             {SPECTRAL_LAYERS.map((layer) => {
@@ -929,10 +929,10 @@ export default function App() {
           className={`drawer-toggle-btn ${drawerOpen ? 'open' : ''}`}
           style={{ display: isCropDrawerOpen ? 'none' : undefined }}
           onClick={() => setDrawerOpen((v) => !v)}
-          title="Toggle Site Telemetry & Predictions"
+          title="Toggle Field Conditions & Climate Guide"
         >
           {drawerOpen ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-          <span>Data</span>
+          <span>Field Data</span>
         </button>
 
         {/* RIGHT: TRANSPARENT SITE TELEMETRY & PREDICTIONS DRAWER */}
@@ -940,11 +940,11 @@ export default function App() {
           <div className="drawer-header">
             <div>
               <span className="drawer-badge">
-                <Sparkles size={13} /> NASA TELEMETRY & PREDICTIONS
+                <Sparkles size={13} /> 🌱 FIELD CONDITIONS & CLIMATE GUIDE
               </span>
-              <h3>{selectedLocation.name}</h3>
+              <h3>{selectedLocation.name} Field</h3>
               <p className="drawer-coords">
-                {selectedLocation.lat.toFixed(4)}°, {selectedLocation.lng.toFixed(4)}° ·{' '}
+                {selectedLocation.lat.toFixed(2)}°N, {selectedLocation.lng.toFixed(2)}°E ·{' '}
                 <strong>{selectedDate}</strong>
               </p>
             </div>
@@ -959,22 +959,22 @@ export default function App() {
 
           {/* TOP SPECTRAL LEGEND */}
           <div className="drawer-spectral-legend">
-            <div className="drawer-legend-title">Spectral Intensity Scale</div>
+            <div className="drawer-legend-title">Field Condition Rating</div>
             <div
               className="drawer-legend-bar"
               style={{ background: SPECTRAL_GRADIENT }}
             />
             <div className="drawer-legend-labels">
-              <span>Low / Cold</span>
-              <span>Optimal</span>
-              <span>High / Stress</span>
+              <span>Cool / Dry</span>
+              <span>Ideal / Healthy</span>
+              <span>Heat / Water Stress</span>
             </div>
           </div>
 
           {telemetryLoading ? (
             <div className="drawer-loading">
               <Loader2 className="spin" size={26} />
-              <p>Collecting satellite observations...</p>
+              <p>Reading live satellite observations for your farm...</p>
             </div>
           ) : siteTelemetry?.metrics ? (
             <>
@@ -992,7 +992,7 @@ export default function App() {
                 className="recommend-route-btn"
                 onClick={handleOpenCrops}
               >
-                <span>Tap to get recommended crops</span>
+                <span>🌾 View Best Crops & Rotation Plan</span>
                 <ArrowRight size={17} />
               </button>
             </>
@@ -1051,44 +1051,37 @@ export default function App() {
       {/* BELOW-THE-FOLD: PROJECT & NASA DATASETS OVERVIEW */}
       <section ref={detailsSectionRef} className="about-section">
         <div className="about-container">
-          <span className="about-eyebrow">EARTH OBSERVATION FOR RESILIENT AGRICULTURE</span>
-          <h2>Data-Driven Crop Rotation Powered by NASA Satellites</h2>
+          <span className="about-eyebrow">SATELLITE ADVISORY FOR RESILIENT AGRICULTURE</span>
+          <h2>Smart Crop & Soil Decisions Powered by Earth Satellites</h2>
           <p className="about-lead">
-            TerraPredict AI helps farmers explore multi-season crop-rotation strategies
-            that restore soil health, reduce heat and water stress, and adapt to
-            long-term climate variability. Select any location on the globe and choose
-            an observation date to query historical and near-real-time satellite
-            indicators.
+            TerraPredict AI gives farmers clear, easy-to-understand advice on what crops to sow,
+            how to protect soil moisture, and how to rotate crops across 3 years. It tracks temperature,
+            soil wetness, and rainfall trends so you get higher yields while cutting down on expensive fertilizer and water.
           </p>
 
           <div className="dataset-grid">
             <div className="dataset-card">
-              <h4>SMAP & GRACE-FO</h4>
+              <h4>💧 Soil Wetness & Groundwater (SMAP & GRACE)</h4>
               <p>
-                Surface and root-zone soil moisture paired with terrestrial water
-                storage anomalies to evaluate drought resilience and irrigation
-                demand.
+                Measures moisture trapped in topsoil and deep underground reserves to tell you whether seeds will germinate and when irrigation is needed.
               </p>
             </div>
             <div className="dataset-card">
-              <h4>ECOSTRESS & MODIS</h4>
+              <h4>🌡️ Field Warmth & Heat Stress (MODIS & ECOSTRESS)</h4>
               <p>
-                Land surface temperature, evapotranspiration rates, and NDVI
-                vegetation stress indices to detect crop heat stress early.
+                Monitors daily ground warmth to ensure your crops stay within safe growing temperatures without risk of frost shock or heat burning.
               </p>
             </div>
             <div className="dataset-card">
-              <h4>GPM & NASA POWER</h4>
+              <h4>🌧️ Rainfall & Storm Patterns (GPM & POWER)</h4>
               <p>
-                High-resolution rainfall patterns, extreme precipitation risks,
-                solar radiation, and frost windows tailored to local coordinates.
+                Forecasts seasonal monsoon rains and dry winter spells so you can plant with confidence and harvest at the right time.
               </p>
             </div>
             <div className="dataset-card">
-              <h4>Landsat & SRTM Elevation</h4>
+              <h4>🌿 Crop Health & Field Drainage (Landsat & SRTM)</h4>
               <p>
-                Field-scale spectral reflectance and digital elevation models to
-                account for slope runoff, drainage, and microclimates.
+                Scans your field’s green canopy health and natural hillside slopes to prevent waterlogging and soil erosion.
               </p>
             </div>
           </div>

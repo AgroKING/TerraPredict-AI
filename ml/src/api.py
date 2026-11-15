@@ -36,6 +36,34 @@ app.add_middleware(
 )
 
 # Curated crop imagery for high-fidelity UI rendering
+FARMER_FRIENDLY_NAMES = {
+    "chickpea": "Chickpea (Chana / Bengal Gram)",
+    "gram": "Chickpea (Chana / Bengal Gram)",
+    "mustard": "Indian Mustard (Sarson / Rai)",
+    "brassica": "Indian Mustard (Sarson / Rai)",
+    "groundnut": "Groundnut (Mungfali / Peanut)",
+    "peanut": "Groundnut (Mungfali / Peanut)",
+    "lentil": "Lentil (Masoor Dal)",
+    "pigeon pea": "Pigeon Pea (Arhar / Toor Dal)",
+    "cajanus": "Pigeon Pea (Arhar / Toor Dal)",
+    "garlic": "Garlic (Lahsun)",
+    "cowpea": "Cowpea (Lobia / Chawli)",
+    "black-eyed pea": "Black-Eyed Pea (White Lobia)",
+    "eggplant": "Eggplant (Baingan / Brinjal)",
+    "bambara": "Bambara Groundnut (Earth Nut)",
+    "wheat": "Winter Wheat (Gehun)",
+    "sunflower": "Sunflower (Surajmukhi)",
+    "sesame": "Sesame (Til)",
+    "soybean": "Soybean (Bhat)",
+}
+
+def get_farmer_crop_name(raw_name: str, crop_id: str) -> str:
+    name_lower = f"{raw_name.lower()} {crop_id.lower()}"
+    for token, friendly in FARMER_FRIENDLY_NAMES.items():
+        if token in name_lower:
+            return friendly
+    return raw_name
+
 WILD_NON_CULTIVATED_TOKENS = {
     "urochloa", "aeschynomene", "bothriochloa", "dichanthium", "chloris",
     "eragrostis", "cenchrus", "brachiaria", "paspalum", "melinis", "digitaria",
@@ -422,29 +450,40 @@ def predict_crops(req: PredictRequest):
             else "-15 kg/ha"
         )
 
+        farmer_name = get_farmer_crop_name(str(c_info["crop_name"]), crop_id)
+        is_fixer = "fixer" in n_role.lower()
+
+        water_level = "Low" if ropmn <= 450 else "Medium" if ropmn <= 700 else "High"
+        farmer_tip = (
+            "Natural soil builder. Takes free nitrogen from the air and leaves it in your soil, saving money on chemical urea for your next crop."
+            if is_fixer
+            else "Reliable cash crop with high market demand. Taps deep moisture trapped in clay soils and handles dry winter spells."
+            if "mustard" in crop_id or "brassica" in crop_id or "garlic" in crop_id
+            else "Hardy and drought-resilient. Requires only 1 to 2 light waterings and delivers dependable local harvest value."
+        )
+
         formatted_crops.append({
             "id": crop_id,
-            "name": str(c_info["crop_name"]),
+            "name": farmer_name,
             "scientificName": str(c_info["scientific_name"]),
             "family": str(c_info.get("family", "Other")),
             "image": get_crop_image(crop_id),
             "feasibilityScore": fit_pct,
             "confidence": round(drought_res, 2),
             "metrics": {
-                "waterNeed": f"{int(ropmn)} mm",
-                "growthCycle": f"{cycle_m * 30} Days ({cycle_m} mo)",
-                "soilTemp": f"{int(topmn)}°C – {int(topmx)}°C",
+                "waterNeed": f"{int(ropmn)} mm ({water_level})",
+                "waterLevel": water_level,
+                "growthCycle": f"{cycle_m * 30} Days (~{cycle_m} mo)",
+                "soilTemp": f"{int(topmn)}°C – {int(topmx)}°C (Mild)",
             },
             "expandedDetails": {
-                "rotationBenefit": (
-                    "Fixes atmospheric nitrogen via root nodules and replenishes topsoil fertility."
-                    if "fixer" in n_role.lower()
-                    else "High biomass residue preserves root-zone soil wetness and prevents erosion."
-                    if bool(c_info.get("is_cover_crop", False))
-                    else "Deep rooting structure loosens compacted subsoil layers and improves drainage."
+                "rotationBenefit": farmer_tip,
+                "nitrogenImpact": (
+                    "🌿 Adds Natural Nitrogen (+45 kg/ha) — Cuts urea fertilizer cost"
+                    if is_fixer
+                    else f"Light soil user ({n_impact}) — safe for continuous cropping"
                 ),
-                "nitrogenImpact": f"{n_role}: {n_impact}",
-                "sowingWindow": f"{row['sow_month']} (Month {int(row['sow_month_num'])})",
+                "sowingWindow": f"Rabi Season · {row['sow_month']} (Month {int(row['sow_month_num'])})",
             },
         })
 

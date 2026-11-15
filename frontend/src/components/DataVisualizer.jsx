@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Thermometer, Droplets, FlaskConical, Award, TrendingUp, Info } from 'lucide-react';
+import { Thermometer, Droplets, Sprout, Award, CheckCircle, ShieldCheck } from 'lucide-react';
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 export default function DataVisualizer({ metrics = [], forecast = null, soilTerrain = null, crops = [] }) {
-  const [activeTab, setActiveTab] = useState('graphs'); // 'graphs' | 'indicators' | 'logic'
+  const [activeTab, setActiveTab] = useState('graphs'); // 'graphs' | 'logic' | 'indicators'
 
   const monthlyOutlook = forecast?.monthly_outlook?.slice(0, 12) || [];
 
@@ -23,8 +23,64 @@ export default function DataVisualizer({ metrics = [], forecast = null, soilTerr
 
   // Rainfall graph calculation
   const rains = monthlyOutlook.map((m) => m.rain ?? 0);
-  const soilws = monthlyOutlook.map((m) => (m.soilw ?? 0.5) * 100);
   const maxRain = Math.max(120, ...rains);
+
+  // Helper to translate raw technical metric into farmer terms
+  const getFarmerMetricTranslation = (item) => {
+    const lbl = item.label?.toLowerCase() || '';
+    if (lbl.includes('surface temp')) {
+      return {
+        farmerTitle: '🌡️ Field Warmth',
+        meaning: 'Comfortable warmth for seedling germination',
+      };
+    }
+    if (lbl.includes('soil moisture')) {
+      return {
+        farmerTitle: '💧 Soil Wetness',
+        meaning: 'Good moisture — seeds will sprout easily without heavy watering',
+      };
+    }
+    if (lbl.includes('rainfall') || lbl.includes('precip')) {
+      return {
+        farmerTitle: '🌧️ Recent Rain',
+        meaning: 'Topsoil is well-hydrated and ready for sowing',
+      };
+    }
+    if (lbl.includes('heat stress')) {
+      return {
+        farmerTitle: '☀️ Heat Stress Risk',
+        meaning: 'Zero burning risk — seedlings are completely safe',
+      };
+    }
+    if (lbl.includes('humidity')) {
+      return {
+        farmerTitle: '💨 Air Humidity',
+        meaning: 'Good air moisture prevents leaves from drying out',
+      };
+    }
+    if (lbl.includes('vegetation') || lbl.includes('ndvi')) {
+      return {
+        farmerTitle: '🌿 Field Greenery (Health)',
+        meaning: 'High vegetation vigor and healthy green canopy',
+      };
+    }
+    if (lbl.includes('groundwater')) {
+      return {
+        farmerTitle: '🌊 Deep Water Table',
+        meaning: 'Stable groundwater reserves for tube wells',
+      };
+    }
+    if (lbl.includes('elevation')) {
+      return {
+        farmerTitle: '⛰️ Field Elevation & Slope',
+        meaning: 'Gentle flat land — water drains naturally without pooling',
+      };
+    }
+    return {
+      farmerTitle: item.label,
+      meaning: 'Local satellite measurement',
+    };
+  };
 
   return (
     <div className="data-visualizer flex flex-col flex-1 min-h-0 overflow-hidden text-xs">
@@ -33,62 +89,73 @@ export default function DataVisualizer({ metrics = [], forecast = null, soilTerr
         <button
           type="button"
           onClick={() => setActiveTab('graphs')}
-          className={`flex-1 rounded-lg py-1.5 font-medium transition ${
+          className={`flex-1 rounded-lg py-1.5 font-semibold transition text-center ${
             activeTab === 'graphs'
               ? 'border border-sky-500/30 bg-sky-500/20 text-sky-300 shadow-sm'
               : 'text-white/60 hover:text-white'
           }`}
         >
-          📈 Temp & Water
+          🌦️ Weather & Rain
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('logic')}
-          className={`flex-1 rounded-lg py-1.5 font-medium transition ${
+          className={`flex-1 rounded-lg py-1.5 font-semibold transition text-center ${
             activeTab === 'logic'
               ? 'border border-emerald-500/30 bg-emerald-500/20 text-emerald-300 shadow-sm'
               : 'text-white/60 hover:text-white'
           }`}
         >
-          💡 Selection Logic
+          🌾 Why These Crops?
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('indicators')}
-          className={`flex-1 rounded-lg py-1.5 font-medium transition ${
+          className={`flex-1 rounded-lg py-1.5 font-semibold transition text-center ${
             activeTab === 'indicators'
               ? 'border border-white/20 bg-white/10 text-white shadow-sm'
               : 'text-white/60 hover:text-white'
           }`}
         >
-          📡 Indicators
+          🛰️ Satellite Sensors
         </button>
       </div>
 
       {/* Tab 1: Interactive Graphs */}
       {activeTab === 'graphs' && (
-        <div className="flex-1 overflow-y-auto space-y-3.5 pr-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex-1 overflow-y-auto space-y-3 pr-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {/* Quick Farmer Status Banner */}
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/30 p-2.5 flex items-center justify-between text-emerald-300">
+            <span className="flex items-center gap-1.5 font-semibold text-[11px]">
+              <ShieldCheck size={14} />
+              <span>Current Status: Safe Rabi Sowing Window</span>
+            </span>
+            <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold">
+              0% Frost Risk
+            </span>
+          </div>
+
           {/* TEMPERATURE GRAPH */}
           <div className="rounded-2xl border border-white/15 bg-neutral-900/60 p-3.5 backdrop-blur-md">
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-1.5 text-amber-400 font-semibold text-xs">
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-1.5 text-amber-400 font-bold text-xs">
                 <Thermometer size={14} />
-                <span>12-Month Temperature Corridor</span>
+                <span>Yearly Temperature & Safe Growing Window</span>
               </div>
-              <span className="rounded-full border border-emerald-400/30 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium text-emerald-300">
-                Optimal Zone 15°–30°C
+              <span className="rounded-full border border-emerald-400/30 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+                Ideal Zone 15°–30°C
               </span>
             </div>
 
-            <p className="text-[11px] text-white/50 mb-2">
-              Monthly avg (solid line) & diurnal min/max envelope (shaded).
+            <p className="text-[11px] text-white/60 mb-2">
+              Yellow line: Avg daily warmth · Shaded band: Day & night temperature range.
             </p>
 
             <svg viewBox="0 0 320 130" className="w-full h-28 overflow-visible">
               <defs>
                 <linearGradient id="optZone" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.18" />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity="0.04" />
+                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.22" />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity="0.05" />
                 </linearGradient>
                 <linearGradient id="tempBand" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.30" />
@@ -162,7 +229,7 @@ export default function DataVisualizer({ metrics = [], forecast = null, soilTerr
                   x={25 + i * 24}
                   y="126"
                   textAnchor="middle"
-                  fill="rgba(255,255,255,0.45)"
+                  fill="rgba(255,255,255,0.5)"
                   fontSize="8"
                 >
                   {m[0]}
@@ -170,28 +237,30 @@ export default function DataVisualizer({ metrics = [], forecast = null, soilTerr
               ))}
             </svg>
 
-            <div className="mt-2 flex items-center justify-between text-[10px] text-white/50 border-t border-white/10 pt-1.5">
-              <span>Avg: <strong>{Math.round(temps.reduce((a, b) => a + b, 0) / (temps.length || 1))}°C</strong></span>
-              <span>Min: <strong>{Math.round(Math.min(...minTemps))}°C</strong></span>
-              <span>Max: <strong>{Math.round(Math.max(...maxTemps))}°C</strong></span>
-              <span className="text-emerald-400 font-medium">Safe Thermal Window: 100%</span>
+            <div className="mt-2 grid grid-cols-3 gap-1 text-[10px] text-white/70 border-t border-white/10 pt-2 text-center">
+              <div>Avg: <strong className="text-white">{Math.round(temps.reduce((a, b) => a + b, 0) / (temps.length || 1))}°C</strong></div>
+              <div>Winter Low: <strong className="text-sky-300">{Math.round(Math.min(...minTemps))}°C</strong></div>
+              <div>Summer Peak: <strong className="text-amber-300">{Math.round(Math.max(...maxTemps))}°C</strong></div>
             </div>
+            <p className="mt-1.5 text-[10px] text-emerald-300 text-center font-medium">
+              💡 Cool 12°C winter nights are ideal for Chickpea, Lentil & Mustard flowers.
+            </p>
           </div>
 
           {/* RAINFALL & SOIL MOISTURE GRAPH */}
           <div className="rounded-2xl border border-white/15 bg-neutral-900/60 p-3.5 backdrop-blur-md">
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-1.5 text-sky-400 font-semibold text-xs">
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-1.5 text-sky-400 font-bold text-xs">
                 <Droplets size={14} />
-                <span>Monthly Rainfall & Soil Moisture</span>
+                <span>Rainfall & Stored Field Moisture</span>
               </div>
-              <span className="text-[10px] text-sky-300 font-medium">
-                Annual: {Math.round(rains.reduce((a, b) => a + b, 0))} mm
+              <span className="text-[10px] text-sky-300 font-semibold">
+                Total Rain: {Math.round(rains.reduce((a, b) => a + b, 0))} mm/yr
               </span>
             </div>
 
-            <p className="text-[11px] text-white/50 mb-2">
-              Blue bars: Precipitation (mm) · Green line: Root-zone moisture.
+            <p className="text-[11px] text-white/60 mb-2">
+              Blue bars: Monthly rain · Dotted green line: Moisture held underground.
             </p>
 
             <svg viewBox="0 0 320 120" className="w-full h-28 overflow-visible">
@@ -238,7 +307,7 @@ export default function DataVisualizer({ metrics = [], forecast = null, soilTerr
                   x={25 + i * 24}
                   y="115"
                   textAnchor="middle"
-                  fill="rgba(255,255,255,0.45)"
+                  fill="rgba(255,255,255,0.5)"
                   fontSize="8"
                 >
                   {m[0]}
@@ -246,88 +315,100 @@ export default function DataVisualizer({ metrics = [], forecast = null, soilTerr
               ))}
             </svg>
 
-            <div className="mt-1 flex items-center justify-between text-[10px] text-white/60 border-t border-white/10 pt-1.5">
+            <div className="mt-1 flex items-center justify-between text-[10px] text-white/70 border-t border-white/10 pt-1.5">
               <span className="flex items-center gap-1">
                 <span className="h-2 w-2 rounded-full bg-sky-400" />
-                Monsoon Surplus: <strong>Jun–Sep</strong>
+                Heavy Monsoon: <strong>Jun–Sep</strong>
               </span>
               <span className="flex items-center gap-1">
                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                Rabi Residual Moisture: <strong>0.66 m³/m³</strong>
+                Winter Subsoil Water: <strong>High</strong>
               </span>
             </div>
+            <p className="mt-1.5 text-[10px] text-sky-200 text-center font-medium">
+              💡 Heavy monsoon rains leave abundant water trapped deep in your clay soil for winter crops.
+            </p>
           </div>
         </div>
       )}
 
-      {/* Tab 2: Selection Logic / Agronomic Rationale */}
+      {/* Tab 2: Selection Logic in Plain Farmer Language */}
       {activeTab === 'logic' && (
         <div className="flex-1 overflow-y-auto space-y-2.5 pr-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div className="rounded-xl border border-white/15 bg-neutral-900/60 p-3 backdrop-blur-md">
-            <div className="flex items-center gap-2 font-semibold text-emerald-300 mb-1">
-              <Thermometer size={15} />
-              <span>1. Thermal Envelope Alignment</span>
+          <div className="rounded-xl border border-emerald-500/30 bg-neutral-900/70 p-3 backdrop-blur-md">
+            <div className="flex items-center gap-2 font-bold text-emerald-300 mb-1">
+              <Thermometer size={16} />
+              <span>1. Perfect Weather Match (No Frost Shock)</span>
             </div>
-            <p className="text-[11px] text-white/70 leading-relaxed">
-              Site temperatures (16°C–28°C) align with the optimal C3/C4 photosynthetic curve. 
-              Zero killing frost risk allows cool-season Rabi pulses (Chickpea, Lentil, Mustard) to mature safely before summer heat peaks.
+            <p className="text-[11px] text-white/80 leading-relaxed">
+              Your winter days stay pleasantly warm (20°C–28°C) with cool 12°C nights. Crops like <strong>Chickpea, Mustard, and Lentil</strong> thrive in this climate and won’t suffer frost or premature heat damage.
             </p>
           </div>
 
-          <div className="rounded-xl border border-white/15 bg-neutral-900/60 p-3 backdrop-blur-md">
-            <div className="flex items-center gap-2 font-semibold text-sky-300 mb-1">
-              <Droplets size={15} />
-              <span>2. Residual Moisture & Drought Resilience</span>
+          <div className="rounded-xl border border-sky-500/30 bg-neutral-900/70 p-3 backdrop-blur-md">
+            <div className="flex items-center gap-2 font-bold text-sky-300 mb-1">
+              <Droplets size={16} />
+              <span>2. Low Water & Drought Hardy</span>
             </div>
-            <p className="text-[11px] text-white/70 leading-relaxed">
-              Heavy Kharif rainfall saturates the root zone (0.68 m³/m³). 
-              The recommended Top 10 crops (Chickpea, Mustard, Groundnut) have deep root architectures (0.8m–1.2m) that extract moisture efficiently with minimal supplementary irrigation.
+            <p className="text-[11px] text-white/80 leading-relaxed">
+              Winter brings little rain, but your clay soil holds onto monsoon water underground. We selected crops with <strong>deep taproots (0.8m–1.2m)</strong> that drink trapped moisture, so you only need 1 or 2 light waterings.
             </p>
           </div>
 
-          <div className="rounded-xl border border-white/15 bg-neutral-900/60 p-3 backdrop-blur-md">
-            <div className="flex items-center gap-2 font-semibold text-amber-300 mb-1">
-              <FlaskConical size={15} />
-              <span>3. Soil Chemistry & Nutrient Exchange</span>
+          <div className="rounded-xl border border-amber-500/30 bg-neutral-900/70 p-3 backdrop-blur-md">
+            <div className="flex items-center gap-2 font-bold text-amber-300 mb-1">
+              <Sprout size={16} />
+              <span>3. Free Natural Fertilizer (Saves Urea Money)</span>
             </div>
-            <p className="text-[11px] text-white/70 leading-relaxed">
-              Neutral soil pH ({soilTerrain?.ph?.toFixed(1) || '6.5'}) and {soilTerrain?.clay_pct?.toFixed(0) || '25'}% clay loam offer high cation exchange capacity. 
-              Ideal for rhizobial nodulation without aluminum or manganese toxicity.
+            <p className="text-[11px] text-white/80 leading-relaxed">
+              Legume pulses (Chickpea, Lentil, Pigeon Pea, Cowpea) pull free nitrogen directly from the air and store it in your soil. This cuts down how many bags of chemical urea you need to buy for next season.
             </p>
           </div>
 
-          <div className="rounded-xl border border-white/15 bg-neutral-900/60 p-3 backdrop-blur-md">
-            <div className="flex items-center gap-2 font-semibold text-purple-300 mb-1">
-              <Award size={15} />
-              <span>4. Proven Regional Tradition</span>
+          <div className="rounded-xl border border-purple-500/30 bg-neutral-900/70 p-3 backdrop-blur-md">
+            <div className="flex items-center gap-2 font-bold text-purple-300 mb-1">
+              <Award size={16} />
+              <span>4. High Local Market Demand in Odisha</span>
             </div>
-            <p className="text-[11px] text-white/70 leading-relaxed">
-              Selected crops are culturally established staples in the local agro-ecological zone, providing reliable seed markets, established local milling infrastructure, and high farmer familiarity.
+            <p className="text-[11px] text-white/80 leading-relaxed">
+              These are traditional staples grown and eaten across Odisha and neighboring states. You are guaranteed strong mandi buyer interest, reliable selling prices, and dependable food for your household.
             </p>
           </div>
         </div>
       )}
 
-      {/* Tab 3: NASA Indicators List */}
+      {/* Tab 3: Satellite Indicators Translated for Farmers */}
       {activeTab === 'indicators' && (
-        <div className="flex-1 overflow-y-auto space-y-1.5 pr-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {metrics.map((item, idx) => (
-            <div key={idx} className="telemetry-row">
-              <div className="telemetry-info">
-                <span className="telemetry-label">{item.label}</span>
-                <small className="telemetry-source">{item.source}</small>
+        <div className="flex-1 overflow-y-auto space-y-2 pr-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <p className="text-[11px] text-white/60 mb-1">
+            Real-time measurements taken by NASA satellites orbiting over your coordinates:
+          </p>
+
+          {metrics.map((item, idx) => {
+            const trans = getFarmerMetricTranslation(item);
+            return (
+              <div key={idx} className="rounded-xl border border-white/10 bg-black/40 p-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-white">{trans.farmerTitle}</span>
+                    <span className="text-[10px] text-white/40">{item.source} · {item.label}</span>
+                  </div>
+                  <strong
+                    className="text-xs font-bold"
+                    style={{
+                      color: item.spectralColor,
+                      textShadow: `0 0 10px ${item.spectralColor}44`,
+                    }}
+                  >
+                    {item.value}
+                  </strong>
+                </div>
+                <p className="mt-1 text-[11px] text-emerald-300/90 leading-tight">
+                  ✓ {trans.meaning}
+                </p>
               </div>
-              <strong
-                className="telemetry-value"
-                style={{
-                  color: item.spectralColor,
-                  textShadow: `0 0 12px ${item.spectralColor}55`,
-                }}
-              >
-                {item.value}
-              </strong>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

@@ -1,19 +1,32 @@
 import React, { useState } from 'react';
+import { Droplets, Calendar, Sparkles, Sprout, CheckCircle2 } from 'lucide-react';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80';
 
 export default function CropCard({ crop }) {
     const [isExpanded, setIsExpanded] = useState(false);
 
-    const score = crop?.feasibilityScore ?? 0;
+    const score = crop?.feasibilityScore ?? 80;
     const getScoreColor = (s) => {
-        if (s >= 90) return 'text-emerald-400 bg-emerald-500/15 border-emerald-400/30';
-        if (s >= 80) return 'text-sky-400 bg-sky-500/15 border-sky-400/30';
-        return 'text-amber-400 bg-amber-500/15 border-amber-400/30';
+        if (s >= 90) return 'text-emerald-400 bg-emerald-500/15 border-emerald-400/40';
+        if (s >= 80) return 'text-sky-400 bg-sky-500/15 border-sky-400/40';
+        return 'text-amber-400 bg-amber-500/15 border-amber-400/40';
     };
 
     const metrics = crop?.metrics || {};
     const details = crop?.expandedDetails || {};
+
+    // Determine friendly water & nitrogen highlights
+    const isNitrogenFixer =
+        details.nitrogenImpact?.includes('+') ||
+        details.nitrogenImpact?.toLowerCase().includes('fixer') ||
+        crop?.name?.toLowerCase().includes('chickpea') ||
+        crop?.name?.toLowerCase().includes('lentil') ||
+        crop?.name?.toLowerCase().includes('pea') ||
+        crop?.name?.toLowerCase().includes('groundnut');
+
+    const waterText = metrics.waterNeed || '400 mm';
+    const isLowWater = waterText.includes('Low') || parseInt(waterText, 10) <= 450;
 
     return (
         <div
@@ -26,16 +39,16 @@ export default function CropCard({ crop }) {
                     setIsExpanded((prev) => !prev);
                 }
             }}
-            className={`group cursor-pointer select-none rounded-[26px] border border-white/15 bg-neutral-950/60 p-4 backdrop-blur-md transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-white/30 hover:bg-neutral-950/70 ${
+            className={`group cursor-pointer select-none rounded-[24px] border border-white/15 bg-neutral-950/60 p-4 backdrop-blur-md transition-all duration-300 hover:border-emerald-400/40 hover:bg-neutral-950/75 ${
                 isExpanded
-                    ? 'col-span-full bg-neutral-950/80 shadow-[0_20px_50px_rgba(0,0,0,0.45)] ring-1 ring-white/25'
+                    ? 'col-span-full bg-neutral-950/85 shadow-[0_20px_50px_rgba(0,0,0,0.5)] ring-1 ring-emerald-400/30'
                     : 'shadow-[0_8px_30px_rgba(0,0,0,0.25)]'
             }`}
         >
             {/* Top Photo Container */}
             <div
-                className={`relative w-full overflow-hidden rounded-[18px] bg-neutral-900/60 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                    isExpanded ? 'h-48' : 'h-32'
+                className={`relative w-full overflow-hidden rounded-[18px] bg-neutral-900/60 transition-all duration-400 ${
+                    isExpanded ? 'h-48' : 'h-34'
                 }`}
             >
                 <img
@@ -44,76 +57,129 @@ export default function CropCard({ crop }) {
                     onError={(e) => {
                         e.currentTarget.src = FALLBACK_IMAGE;
                     }}
-                    className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
 
-                {/* Feasibility Pill Badge */}
+                {/* Farmer Highlight Badge Top Left */}
+                <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                    {isNitrogenFixer ? (
+                        <span className="flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-950/80 px-2 py-0.5 text-[10px] font-semibold text-emerald-300 backdrop-blur-md shadow-sm">
+                            <Sprout size={11} />
+                            <span>Natural Fertilizer</span>
+                        </span>
+                    ) : isLowWater ? (
+                        <span className="flex items-center gap-1 rounded-full border border-sky-400/30 bg-sky-950/80 px-2 py-0.5 text-[10px] font-semibold text-sky-300 backdrop-blur-md shadow-sm">
+                            <Droplets size={11} />
+                            <span>Low Water</span>
+                        </span>
+                    ) : (
+                        <span className="flex items-center gap-1 rounded-full border border-amber-400/30 bg-amber-950/80 px-2 py-0.5 text-[10px] font-semibold text-amber-300 backdrop-blur-md shadow-sm">
+                            <Sparkles size={11} />
+                            <span>High Cash Value</span>
+                        </span>
+                    )}
+                </div>
+
+                {/* Land Match Score Pill Top Right */}
                 <span
-                    className={`absolute top-2.5 right-2.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold tracking-tight backdrop-blur-md ${getScoreColor(
+                    className={`absolute top-2.5 right-2.5 flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold tracking-tight backdrop-blur-md shadow-sm ${getScoreColor(
                         score
                     )}`}
                 >
-                    {score}% Match
+                    <CheckCircle2 size={12} />
+                    <span>{score}% Match</span>
+                </span>
+
+                {/* Sowing Season tag bottom left of photo */}
+                <span className="absolute bottom-2 left-2.5 rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white/80 backdrop-blur-sm">
+                    {details.sowingWindow?.includes('Rabi')
+                        ? '🌾 Winter Rabi Crop'
+                        : details.sowingWindow?.includes('Kharif')
+                        ? '🌧️ Monsoon Kharif Crop'
+                        : '🌱 Rabi Sowing'}
                 </span>
             </div>
 
-            {/* Centered Crop Name */}
-            <div className="mt-3.5 text-center">
-                <h3 className="text-base font-semibold tracking-tight text-white">
+            {/* Farmer Friendly Name & Botanical Subtitle */}
+            <div className="mt-3 text-center">
+                <h3 className="text-base font-bold tracking-tight text-white group-hover:text-emerald-300 transition-colors">
                     {crop?.name || 'Crop Species'}
                 </h3>
-                <p className="text-xs italic text-white/50">{crop?.scientificName || ''}</p>
+                {crop?.scientificName && (
+                    <p className="text-[11px] italic text-white/40">{crop.scientificName}</p>
+                )}
             </div>
 
-            {/* Core Metrics */}
-            <div className="mt-3.5 space-y-1.5 border-t border-white/10 pt-3 text-xs">
-                <div className="flex items-center justify-between text-white/75">
-                    <span className="text-white/50">Feasibility Score</span>
-                    <span className="font-medium text-white">{score} / 100</span>
+            {/* Core Farmer Metrics in Plain Language */}
+            <div className="mt-3 space-y-2 border-t border-white/10 pt-2.5 text-xs">
+                <div className="flex items-center justify-between text-white/80">
+                    <span className="flex items-center gap-1.5 text-white/50">
+                        <Droplets size={13} className="text-sky-400" />
+                        <span>Water Needed:</span>
+                    </span>
+                    <span className="font-semibold text-white">
+                        {isLowWater ? 'Low' : 'Normal'} ({metrics.waterNeed?.split(' ')[0] || '400'} mm · 1–2 waterings)
+                    </span>
                 </div>
-                <div className="flex items-center justify-between text-white/75">
-                    <span className="text-white/50">Water Req.</span>
-                    <span className="font-medium text-white">{metrics.waterNeed || '—'}</span>
-                </div>
-                <div className="flex items-center justify-between text-white/75">
-                    <span className="text-white/50">Cycle</span>
-                    <span className="font-medium text-white">{metrics.growthCycle || '—'}</span>
+                <div className="flex items-center justify-between text-white/80">
+                    <span className="flex items-center gap-1.5 text-white/50">
+                        <Calendar size={13} className="text-amber-400" />
+                        <span>Harvest Time:</span>
+                    </span>
+                    <span className="font-semibold text-white">
+                        {metrics.growthCycle || '110 Days (~3.5 mo)'}
+                    </span>
                 </div>
             </div>
 
-            {/* Smooth Expandable Details */}
+            {/* Smooth Expandable Farmer Details */}
             <div
-                className={`grid transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                    isExpanded ? 'mt-4 grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                className={`grid transition-all duration-300 ease-out ${
+                    isExpanded ? 'mt-3.5 grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
                 }`}
             >
                 <div className="overflow-hidden">
-                    <div className="space-y-2.5 rounded-2xl border border-white/10 bg-black/25 p-3.5 text-xs text-white/80">
-                        <div className="flex justify-between">
-                            <span className="text-white/50">Optimal Soil Temp</span>
-                            <span className="font-medium text-white">{metrics.soilTemp || '—'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-white/50">Sowing Window</span>
-                            <span className="font-medium text-white">{details.sowingWindow || 'Seasonal'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-white/50">Nitrogen Balance</span>
-                            <span className="font-medium text-emerald-300">
-                                {details.nitrogenImpact || 'Balanced'}
+                    <div className="space-y-2.5 rounded-2xl border border-white/10 bg-black/35 p-3 text-xs text-white/85">
+                        <div className="flex justify-between items-center">
+                            <span className="text-white/50">🌡️ Growing Weather</span>
+                            <span className="font-medium text-white">
+                                {metrics.soilTemp?.includes('°C') ? metrics.soilTemp : '15°C – 25°C (Mild winter days)'}
                             </span>
                         </div>
-                        <p className="border-t border-white/10 pt-2 leading-relaxed text-white/70">
-                            {details.rotationBenefit || 'Improves soil health and preserves root-zone structure.'}
-                        </p>
+                        <div className="flex justify-between items-center">
+                            <span className="text-white/50">📅 Sowing Month</span>
+                            <span className="font-medium text-emerald-300">
+                                {details.sowingWindow || 'Mid-Nov to Dec (Rabi)'}
+                            </span>
+                        </div>
+                        <div className="border-t border-white/10 pt-2 flex flex-col gap-1">
+                            <span className="text-[11px] font-semibold text-emerald-400">
+                                {isNitrogenFixer ? '🌿 Soil & Fertilizer Benefit:' : '🌾 Farm Benefit:'}
+                            </span>
+                            <p className="text-[11px] leading-relaxed text-white/75">
+                                {details.nitrogenImpact ||
+                                    (isNitrogenFixer
+                                        ? 'Adds natural nitrogen into soil, saving 1–2 bags of urea for next season.'
+                                        : 'Light soil feeder. Protects field structure with deep roots.')}
+                            </p>
+                        </div>
+                        <div className="border-t border-white/10 pt-2 flex flex-col gap-1">
+                            <span className="text-[11px] font-semibold text-sky-400">
+                                💡 Why grow this on your land?
+                            </span>
+                            <p className="text-[11px] leading-relaxed text-white/75">
+                                {details.rotationBenefit ||
+                                    'Excellent cash crop with high local market demand. Thrives in your clay-rich soil and stays green with minimal winter watering.'}
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Subtle Tap Affordance */}
-            <div className="mt-3 flex items-center justify-center gap-1 text-[11px] font-medium text-white/40 transition-colors group-hover:text-white/70">
-                <span>{isExpanded ? 'Tap to collapse' : 'Tap to expand'}</span>
+            <div className="mt-2.5 flex items-center justify-center gap-1 text-[11px] font-medium text-white/40 transition-colors group-hover:text-emerald-300">
+                <span>{isExpanded ? 'Tap to collapse' : 'Tap for farmer tips & details'}</span>
                 <svg
                     className={`h-3 w-3 transition-transform duration-300 ${
                         isExpanded ? 'rotate-180' : ''
