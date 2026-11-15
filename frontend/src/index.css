@@ -243,14 +243,20 @@ body,
 }
 
 /* ==================================================
-   TOP-CENTER: OBSERVATION DATE PICKER
+   TOP-CENTER: OBSERVATION DATE PICKER & HOW IT WORKS
    ================================================== */
-.date-picker-bar {
+.top-action-bar {
   position: absolute;
   top: 20px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.date-picker-bar {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -261,6 +267,32 @@ body,
   border: 1px solid rgba(148, 163, 184, 0.25);
   border-radius: 14px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+.how-it-works-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  background: rgba(15, 23, 42, 0.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  color: #f8fafc;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.how-it-works-btn:hover {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: rgba(52, 211, 153, 0.55);
+  color: #34d399;
+  transform: translateY(-1px);
 }
 
 .date-icon {

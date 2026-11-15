@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import CropDrawer from './components/CropDrawer';
 import DataVisualizer from './components/DataVisualizer';
+import HowItWorksModal from './components/HowItWorksModal';
 import { MOCK_CROPS } from './data/mockCrops';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -29,6 +30,7 @@ import {
   ChevronDown,
   Sparkles,
   ArrowRight,
+  BookOpen,
 } from 'lucide-react';
 
 // --------------------------------------------------
@@ -209,6 +211,7 @@ export default function App() {
 
   // Crop Recommendations Drawer State
   const [isCropDrawerOpen, setIsCropDrawerOpen] = useState(false);
+  const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
 
   const activeSpectral = SPECTRAL_LAYERS.find((l) => l.id === activeSpectralId) || null;
 
@@ -846,17 +849,29 @@ export default function App() {
           )}
         </div>
 
-        {/* TOP-CENTER: OBSERVATION DATE PICKER */}
-        <div className="date-picker-bar">
-          <Calendar size={17} className="date-icon" />
-          <label htmlFor="obs-date">Observation Date</label>
-          <input
-            id="obs-date"
-            type="date"
-            value={selectedDate}
-            max={maxDate}
-            onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
-          />
+        {/* TOP-CENTER: OBSERVATION DATE PICKER & HOW IT WORKS */}
+        <div className="top-action-bar">
+          <div className="date-picker-bar">
+            <Calendar size={17} className="date-icon" />
+            <label htmlFor="obs-date">Observation Date</label>
+            <input
+              id="obs-date"
+              type="date"
+              value={selectedDate}
+              max={maxDate}
+              onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
+            />
+          </div>
+
+          <button
+            type="button"
+            className="how-it-works-btn"
+            onClick={() => setIsHowItWorksOpen(true)}
+            title="Read system architecture & methodology"
+          >
+            <BookOpen size={15} className="text-emerald-400" />
+            <span>How It Works</span>
+          </button>
         </div>
 
         {/* LEFT: SPECTRAL OVERLAYS DASHBOARD */}
@@ -1043,6 +1058,12 @@ export default function App() {
           soilTerrain={siteTelemetry?.soil_terrain}
         />
 
+        {/* HOW IT WORKS MODAL */}
+        <HowItWorksModal
+          isOpen={isHowItWorksOpen}
+          onClose={() => setIsHowItWorksOpen(false)}
+        />
+
         {/* BOTTOM-LEFT: LIVE COORDINATES */}
         <div className="coordinates">
           {hoverCoords
@@ -1072,6 +1093,16 @@ export default function App() {
             how to protect soil moisture, and how to rotate crops across 3 years. It tracks temperature,
             soil wetness, and rainfall trends so you get higher yields while cutting down on expensive fertilizer and water.
           </p>
+          <div className="mt-4 mb-2">
+            <button
+              type="button"
+              onClick={() => setIsHowItWorksOpen(true)}
+              className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/20 px-4 py-2.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/30 transition shadow-sm"
+            >
+              <BookOpen size={15} />
+              <span>Open System Architecture & How It Works</span>
+            </button>
+          </div>
 
           <div className="dataset-grid">
             <div className="dataset-card">
