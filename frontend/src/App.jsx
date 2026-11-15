@@ -1021,6 +1021,8 @@ export default function App() {
           crops={siteTelemetry?.crops?.length ? siteTelemetry.crops : MOCK_CROPS}
           strategies={siteTelemetry?.strategies}
           soilTerrain={siteTelemetry?.soil_terrain}
+          totalDatabaseCrops={siteTelemetry?.total_database_crops ?? 2071}
+          totalViableCrops={siteTelemetry?.total_viable_crops ?? null}
         />
 
         {/* BOTTOM-LEFT: LIVE COORDINATES */}

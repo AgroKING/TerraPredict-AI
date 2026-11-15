@@ -338,9 +338,29 @@ def optimize_rotation_beam(
     horizon: int = 36,
     beam_width: int = 45,
 ) -> dict:
+    # When using full EcoCrop DB (>80 crops), prescreen candidates for rotation beam search
+    if len(crops_df) > 80:
+        candidates = []
+        for idx, crop in crops_df.iterrows():
+            c_len = int(crop["cycle_months"])
+            if c_len > 12:
+                continue
+            # Sample across 4 quarters of year 1
+            fits = [evaluate_crop_window(crop, t, timeline, soil, irrigation)[0] for t in (0, 3, 6, 9)]
+            best_fit = max(fits)
+            if best_fit > 0.10:
+                is_cov = bool(crop["is_cover_crop"])
+                is_fix = crop["nitrogen_role"] == "fixer"
+                candidates.append((idx, best_fit, is_cov, is_fix))
+        candidates.sort(key=lambda x: (x[2] or x[3], x[1]), reverse=True)
+        top_indices = [x[0] for x in candidates[:75]]
+        active_crops = crops_df.loc[top_indices]
+    else:
+        active_crops = crops_df
+
     # Precompute viable (crop_idx, start_t) -> (fit, drought_res)
     eval_cache: dict[tuple[int, int], tuple[float, float]] = {}
-    for idx, crop in crops_df.iterrows():
+    for idx, crop in active_crops.iterrows():
         for t in range(horizon):
             fit, dr = evaluate_crop_window(crop, t, timeline, soil, irrigation)
             if fit > 0.05:
@@ -363,7 +383,7 @@ def optimize_rotation_beam(
                 idle_pen -= 0.35
             next_beam.append((cum_score + idle_pen, t + 1, events))
 
-            for idx, crop in crops_df.iterrows():
+            for idx, crop in active_crops.iterrows():
                 if (idx, t) not in eval_cache:
                     continue
                 c_len = int(crop["cycle_months"])

@@ -302,9 +302,51 @@ def _pick_val(row: pd.Series | None, col: str, fallback: float) -> float:
     return float(fallback)
 
 
+def _clean_family(fam_str: str) -> str:
+    if not isinstance(fam_str, str) or fam_str.lower() == "nan" or not fam_str.strip():
+        return "Other"
+    parts = fam_str.split(":")
+    last = parts[-1].strip()
+    low = last.lower()
+    if "leguminosae" in low or "fabaceae" in low:
+        return "Fabaceae"
+    if "gramineae" in low or "poaceae" in low:
+        return "Poaceae"
+    if "cruciferae" in low or "brassicaceae" in low:
+        return "Brassicaceae"
+    if "compositae" in low or "asteraceae" in low:
+        return "Asteraceae"
+    if "solanaceae" in low:
+        return "Solanaceae"
+    return last
+
+
+def _clean_crop_name(sci: str, com: str) -> str:
+    if isinstance(com, str) and com.strip() and com.lower() != "nan":
+        candidates = [c.strip() for c in com.split(",") if c.strip()]
+        if candidates:
+            keywords = [
+                "wheat", "corn", "maize", "rice", "bean", "pea", "barley", "oat", "millet",
+                "sorghum", "potato", "tomato", "pepper", "cabbage", "carrot", "onion",
+                "garlic", "soybean", "mustard", "sunflower", "cotton", "cassava", "yam",
+                "sweet potato", "clover", "vetch", "alfalfa", "okra", "spinach", "lettuce",
+                "cucumber", "squash", "melon", "lentil", "chickpea", "apple", "grape",
+                "banana", "mango", "citrus", "orange", "lemon", "coffee", "tea", "sugarcane",
+                "canola", "flax", "sesame", "peanut", "groundnut", "rye"
+            ]
+            for c in candidates:
+                c_low = c.lower()
+                if any(k in c_low for k in keywords):
+                    return c.title()
+            return candidates[0].title()
+    return sci
+
+
 def build_prepared_crops() -> pd.DataFrame:
     raw_df = load_raw_ecocrop(RAW_ECOCROP_PATH)
     records = []
+    seen_sci = set()
+    seen_ids = set()
 
     for crop_id, meta in GLOBAL_ECOTYPE_CATALOG.items():
         (
@@ -322,7 +364,9 @@ def build_prepared_crops() -> pd.DataFrame:
                 eco_row = matches.iloc[0]
 
         family = fam_fallback
-        if eco_row is not None and "FAMILY" in eco_row and pd.notna(eco_row["FAMILY"]):
+        if eco_row is not None and "FAMNAME" in eco_row and pd.notna(eco_row["FAMNAME"]):
+            family = _clean_family(str(eco_row["FAMNAME"]))
+        elif eco_row is not None and "FAMILY" in eco_row and pd.notna(eco_row["FAMILY"]):
             fam_str = str(eco_row["FAMILY"]).strip()
             if fam_str and fam_str.lower() != "nan":
                 family = fam_str
@@ -383,6 +427,100 @@ def build_prepared_crops() -> pd.DataFrame:
             "is_cover_crop": bool(is_cover),
             "min_sowing_soilw": float(min_soilw),
         })
+        seen_sci.add(sci_name.lower())
+        seen_ids.add(crop_id)
+
+    # Ingest entire FAO EcoCrop database
+    if not raw_df.empty:
+        import re
+        for _, row in raw_df.iterrows():
+            sci = str(row.get("SCIENTIFICNAME", "")).strip()
+            if not sci or sci.lower() == "nan" or sci.lower() in seen_sci:
+                continue
+
+            tmin = row.get("TMIN")
+            topmn = row.get("TOPMN")
+            topmx = row.get("TOPMX")
+            tmax = row.get("TMAX")
+            rmin = row.get("RMIN")
+            ropmn = row.get("ROPMN")
+            ropmx = row.get("ROPMX")
+            rmax = row.get("RMAX")
+
+            if pd.isna(tmin) or pd.isna(topmn) or pd.isna(topmx) or pd.isna(tmax):
+                continue
+            if pd.isna(rmin) or pd.isna(ropmn) or pd.isna(ropmx) or pd.isna(rmax):
+                continue
+
+            tmin, topmn, topmx, tmax = float(tmin), float(topmn), float(topmx), float(tmax)
+            rmin, ropmn, ropmx, rmax = float(rmin), float(ropmn), float(ropmx), float(rmax)
+
+            # Physiological consistency sanity
+            if topmn < tmin: topmn = tmin
+            if topmx < topmn: topmx = topmn
+            if tmax < topmx: tmax = topmx
+            if ropmn < rmin: ropmn = rmin
+            if ropmx < ropmn: ropmx = ropmn
+            if rmax < ropmx: rmax = ropmx
+
+            phmin = float(row.get("PHMIN", 5.5)) if pd.notna(row.get("PHMIN")) else 5.5
+            phopmn = float(row.get("PHOPMN", 6.0)) if pd.notna(row.get("PHOPMN")) else 6.0
+            phopmx = float(row.get("PHOPMX", 7.5)) if pd.notna(row.get("PHOPMX")) else 7.5
+            phmax = float(row.get("PHMAX", 8.2)) if pd.notna(row.get("PHMAX")) else 8.2
+
+            gmin = float(row.get("GMIN", 90)) if pd.notna(row.get("GMIN")) and float(row.get("GMIN")) > 0 else 90.0
+            gmax = float(row.get("GMAX", 150)) if pd.notna(row.get("GMAX")) and float(row.get("GMAX")) > 0 else 150.0
+
+            cycle_months = max(2, min(12, int(round(((gmin + gmax) / 2.0) / 30.0))))
+            family = _clean_family(str(row.get("FAMNAME", "")))
+            genus = sci.split()[0]
+            crop_name = _clean_crop_name(sci, str(row.get("COMNAME", "")))
+
+            base_id = re.sub(r"[^a-z0-9]+", "_", sci.lower()).strip("_")
+            crop_id = base_id
+            suffix = 2
+            while crop_id in seen_ids:
+                crop_id = f"{base_id}_{suffix}"
+                suffix += 1
+
+            cat = str(row.get("CAT", "")).lower()
+            is_cover = any(k in cat for k in ["forage", "pasture", "environmental", "cover"])
+            n_role = "fixer" if family == "Fabaceae" else ("heavy_feeder" if family in ["Poaceae", "Solanaceae"] else "light_feeder")
+
+            dep = str(row.get("DEP", "")).lower()
+            root_cls = "shallow" if "shallow" in dep else ("deep" if "deep" in dep else "medium")
+
+            dra = str(row.get("DRA", "")).lower()
+            water_ok = "poorly" in dra or "saturated" in dra
+
+            sow_tmin = max(0.0, topmn - 6.0)
+            sow_tmax = min(40.0, topmx + 5.0)
+            harvest_tmin = max(5.0, topmn - 3.0)
+
+            records.append({
+                "crop_id": crop_id,
+                "crop_name": crop_name,
+                "scientific_name": sci,
+                "genus": genus,
+                "family": family,
+                "cycle_months": cycle_months,
+                "sow_tmin": sow_tmin,
+                "sow_tmax": sow_tmax,
+                "vernalization_required": False,
+                "harvest_tmin": harvest_tmin,
+                "cool_season_cover": False,
+                "tmin": tmin, "topmn": topmn, "topmx": topmx, "tmax": tmax,
+                "rmin": rmin, "ropmn": ropmn, "ropmx": ropmx, "rmax": rmax,
+                "phmin": phmin, "phopmn": phopmn, "phopmx": phopmx, "phmax": phmax,
+                "gmin": gmin, "gmax": gmax,
+                "nitrogen_role": n_role,
+                "root_depth_class": root_cls,
+                "waterlogging_ok": water_ok,
+                "is_cover_crop": is_cover,
+                "min_sowing_soilw": 0.40,
+            })
+            seen_sci.add(sci.lower())
+            seen_ids.add(crop_id)
 
     return pd.DataFrame(records)
 

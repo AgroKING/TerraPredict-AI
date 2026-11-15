@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import CropCard from './CropCard';
 
 export default function CropDrawer({
@@ -8,8 +8,12 @@ export default function CropDrawer({
     crops = [],
     strategies = null,
     soilTerrain = null,
+    totalDatabaseCrops = 2071,
+    totalViableCrops = null,
 }) {
     const [activeTab, setActiveTab] = useState('recommended');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedFamily, setSelectedFamily] = useState('ALL');
 
     const strategyKeys = {
         regenerative: 'soil_regenerative',
@@ -21,6 +25,32 @@ export default function CropDrawer({
         activeTab !== 'recommended' && strategies
             ? strategies[strategyKeys[activeTab]]
             : null;
+
+    // Filtered crops based on search query and family filter
+    const filteredCrops = useMemo(() => {
+        return crops.filter((crop) => {
+            const matchesQuery =
+                !searchQuery ||
+                crop.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                crop.scientificName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (crop.family && crop.family.toLowerCase().includes(searchQuery.toLowerCase()));
+
+            const matchesFamily =
+                selectedFamily === 'ALL' ||
+                (crop.family && crop.family.toUpperCase() === selectedFamily.toUpperCase());
+
+            return matchesQuery && matchesFamily;
+        });
+    }, [crops, searchQuery, selectedFamily]);
+
+    // Available families in current result
+    const availableFamilies = useMemo(() => {
+        const set = new Set();
+        crops.forEach((c) => {
+            if (c.family && c.family !== 'Other') set.add(c.family);
+        });
+        return Array.from(set).slice(0, 6);
+    }, [crops]);
 
     return (
         <>
@@ -35,7 +65,7 @@ export default function CropDrawer({
             {/* Floating Frosted Glass Drawer Panel */}
             <aside
                 aria-hidden={!isOpen}
-                className={`fixed top-4 right-4 bottom-4 z-40 flex w-[92vw] flex-col overflow-hidden rounded-[34px] border border-white/20 bg-neutral-950/40 shadow-[0_25px_70px_rgba(0,0,0,0.7)] backdrop-blur-xl transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] sm:w-[48vw] sm:min-w-[440px] sm:max-w-[720px] ${
+                className={`fixed top-4 right-4 bottom-4 z-40 flex w-[92vw] flex-col overflow-hidden rounded-[34px] border border-white/20 bg-neutral-950/45 shadow-[0_25px_70px_rgba(0,0,0,0.7)] backdrop-blur-xl transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] sm:w-[48vw] sm:min-w-[450px] sm:max-w-[740px] ${
                     isOpen ? 'translate-x-0' : 'translate-x-[calc(100%+2rem)]'
                 }`}
             >
@@ -45,21 +75,26 @@ export default function CropDrawer({
                         <div>
                             <div className="flex items-center gap-2">
                                 <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399]" />
-                                <span className="text-[11px] font-medium tracking-wider text-white/60 uppercase">
-                                    Agro-Climatic Intelligence
+                                <span className="text-[11px] font-medium tracking-wider text-emerald-400 uppercase">
+                                    FAO EcoCrop Global Database ({totalDatabaseCrops.toLocaleString()} Species)
                                 </span>
                             </div>
                             <h2 className="mt-0.5 text-xl font-semibold tracking-tight text-white">
                                 {activeTab === 'recommended'
-                                    ? 'Recommended Crops'
+                                    ? `Agro-Feasibility (${crops.length} Analyzed)`
                                     : '3-Year Crop Rotation Plan'}
                             </h2>
                             {coordinates && (
                                 <p className="mt-0.5 text-xs text-white/50">
                                     Lat {coordinates.lat.toFixed(2)}° · Lon {coordinates.lon.toFixed(2)}°
                                     {soilTerrain && (
-                                        <span className="ml-2 border-l border-white/15 pl-2 text-emerald-400/80">
+                                        <span className="ml-2 border-l border-white/15 pl-2 text-white/70">
                                             Soil pH {soilTerrain.ph?.toFixed(1)} · Clay {soilTerrain.clay_pct?.toFixed(0)}%
+                                        </span>
+                                    )}
+                                    {totalViableCrops !== null && (
+                                        <span className="ml-2 border-l border-white/15 pl-2 text-emerald-400">
+                                            {totalViableCrops} Viable Species
                                         </span>
                                     )}
                                 </p>
@@ -89,7 +124,7 @@ export default function CropDrawer({
                             }`}
                         >
                             <span>🌾</span>
-                            <span>Top Crops</span>
+                            <span>EcoCrop Recommendations ({crops.length})</span>
                         </button>
 
                         <button
@@ -131,16 +166,97 @@ export default function CropDrawer({
                             <span>Baseline</span>
                         </button>
                     </div>
+
+                    {/* Search & Family Filter Bar (For Recommended tab) */}
+                    {activeTab === 'recommended' && (
+                        <div className="mt-3 space-y-2">
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Search 2,000+ EcoCrop species by common or scientific name..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full rounded-xl border border-white/10 bg-black/50 px-3.5 py-2 pl-9 text-xs text-white placeholder-white/40 focus:border-emerald-400/50 focus:outline-none"
+                                />
+                                <svg
+                                    className="absolute top-2.5 left-3 h-3.5 w-3.5 text-white/40"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                    />
+                                </svg>
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => setSearchQuery('')}
+                                        className="absolute top-2 right-2.5 text-xs text-white/40 hover:text-white"
+                                    >
+                                        ✕
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Family Chips */}
+                            <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <span className="text-white/40">Family:</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedFamily('ALL')}
+                                    className={`rounded-lg px-2 py-0.5 transition ${
+                                        selectedFamily === 'ALL'
+                                            ? 'bg-white/20 text-white font-medium'
+                                            : 'text-white/50 hover:text-white'
+                                    }`}
+                                >
+                                    All
+                                </button>
+                                {availableFamilies.map((fam) => (
+                                    <button
+                                        key={fam}
+                                        type="button"
+                                        onClick={() => setSelectedFamily(fam)}
+                                        className={`rounded-lg px-2 py-0.5 transition ${
+                                            selectedFamily === fam
+                                                ? 'bg-emerald-500/25 text-emerald-300 font-medium'
+                                                : 'text-white/50 hover:text-white'
+                                        }`}
+                                    >
+                                        {fam}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Content Area */}
                 <div className="flex-1 overflow-y-auto px-6 py-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     {activeTab === 'recommended' ? (
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            {crops.map((crop) => (
-                                <CropCard key={crop.id} crop={crop} />
-                            ))}
-                        </div>
+                        filteredCrops.length > 0 ? (
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                {filteredCrops.map((crop) => (
+                                    <CropCard key={crop.id} crop={crop} />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex h-48 flex-col items-center justify-center text-center text-white/50">
+                                <p>No crops matching "{searchQuery}" in this climate.</p>
+                                <button
+                                    onClick={() => {
+                                        setSearchQuery('');
+                                        setSelectedFamily('ALL');
+                                    }}
+                                    className="mt-2 text-xs text-emerald-400 underline"
+                                >
+                                    Reset filters
+                                </button>
+                            </div>
+                        )
                     ) : currentStrategy ? (
                         <div className="space-y-5">
                             {/* Stewardship Scorecard */}
@@ -233,7 +349,7 @@ export default function CropDrawer({
                         </div>
                     ) : (
                         <div className="flex h-48 flex-col items-center justify-center text-center text-white/50">
-                            <p>Loading multi-year crop rotation optimization...</p>
+                            <p>Optimizing multi-year rotation...</p>
                         </div>
                     )}
                 </div>

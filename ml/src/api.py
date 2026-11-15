@@ -224,18 +224,21 @@ def predict_crops(req: PredictRequest):
             CROPS_CATALOG, timeline, soil, irrigation, strategy=strat_key
         )
 
-    # 4. Compute single-season biophysical feasibility across all crops
+    # 4. Compute single-season biophysical feasibility across all 2,071 EcoCrop crops
     scores_df = export_monthly_crop_scores(CROPS_CATALOG, timeline, soil, irrigation)
 
-    # Aggregate best score per unique crop
+    # Aggregate best score per unique crop across the entire database
     best_crops = (
         scores_df.sort_values("biophysical_fit", ascending=False)
         .drop_duplicates(subset=["crop_id"])
-        .head(10)
     )
+    total_viable = int((best_crops["biophysical_fit"] > 0.05).sum())
+
+    # Return top 60 highest matching crops
+    top_selection = best_crops.head(60)
 
     formatted_crops = []
-    for _, row in best_crops.iterrows():
+    for _, row in top_selection.iterrows():
         crop_id = str(row["crop_id"])
         crop_match = CROPS_CATALOG[CROPS_CATALOG["crop_id"] == crop_id]
         if crop_match.empty:
@@ -245,10 +248,10 @@ def predict_crops(req: PredictRequest):
         fit_pct = int(round(float(row["biophysical_fit"]) * 100))
         drought_res = float(row["drought_resilience"])
         cycle_m = int(c_info["cycle_months"])
-        ropmn = float(c_info["ropmn"])
-        topmn = float(c_info["topmn"])
-        topmx = float(c_info["topmx"])
-        n_role = str(c_info["nitrogen_role"]).replace("_", " ").title()
+        ropmn = float(c_info.get("ropmn", 400.0))
+        topmn = float(c_info.get("topmn", 15.0))
+        topmx = float(c_info.get("topmx", 25.0))
+        n_role = str(c_info.get("nitrogen_role", "light_feeder")).replace("_", " ").title()
 
         n_impact = (
             "+45 kg/ha (Net soil gain)"
@@ -262,6 +265,7 @@ def predict_crops(req: PredictRequest):
             "id": crop_id,
             "name": str(c_info["crop_name"]),
             "scientificName": str(c_info["scientific_name"]),
+            "family": str(c_info.get("family", "Other")),
             "image": get_crop_image(crop_id),
             "feasibilityScore": fit_pct,
             "confidence": round(drought_res, 2),
@@ -275,7 +279,7 @@ def predict_crops(req: PredictRequest):
                     "Fixes atmospheric nitrogen via root nodules and replenishes topsoil fertility."
                     if "fixer" in n_role.lower()
                     else "High biomass residue preserves root-zone soil wetness and prevents erosion."
-                    if bool(c_info["is_cover_crop"])
+                    if bool(c_info.get("is_cover_crop", False))
                     else "Deep rooting structure loosens compacted subsoil layers and improves drainage."
                 ),
                 "nitrogenImpact": f"{n_role}: {n_impact}",
@@ -293,6 +297,8 @@ def predict_crops(req: PredictRequest):
     return {
         "success": True,
         "location": {"lat": lat, "lon": lon},
+        "total_database_crops": len(CROPS_CATALOG),
+        "total_viable_crops": total_viable,
         "soil_terrain": soil,
         "forecast": {
             "dates": forecast_dates,

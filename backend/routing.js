@@ -252,6 +252,7 @@ function normalizeMl(mlData) {
     id: c.id,
     name: c.name,
     scientificName: c.scientificName ?? "",
+    family: c.family ?? "Other",
     image: c.image ?? "",
     feasibilityScore: Math.round(c.feasibilityScore ?? 0),
     confidence: c.confidence ?? null,
@@ -274,6 +275,8 @@ function normalizeMl(mlData) {
     crops,
     strategies: mlData.strategies ?? null,
     soil_terrain: mlData.soil_terrain ?? null,
+    total_database_crops: mlData.total_database_crops ?? 2071,
+    total_viable_crops: mlData.total_viable_crops ?? crops.length,
   };
 }
 
@@ -327,6 +330,8 @@ app.post("/api/site-telemetry", async (req, res) => {
     response.crops = normalized.crops;
     response.strategies = normalized.strategies;
     response.soil_terrain = normalized.soil_terrain;
+    response.total_database_crops = normalized.total_database_crops;
+    response.total_viable_crops = normalized.total_viable_crops;
   } catch (err) {
     console.error("ML service error:", err);
     response.errors.ml = "ML service unreachable";
