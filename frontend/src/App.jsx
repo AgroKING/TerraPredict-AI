@@ -226,6 +226,8 @@ export default function App() {
 
   // Selected Date & Farm Location
   const maxDate = getMaxSatelliteDate();
+  // primaryDate stores user's intended target date (defaults to latest available)
+  const [primaryDate, setPrimaryDate] = useState(maxDate);
   const [selectedDate, setSelectedDate] = useState(maxDate);
 
   const [selectedLocation, setSelectedLocation] = useState({
@@ -257,20 +259,26 @@ export default function App() {
 
   const activeSpectral = SPECTRAL_LAYERS.find((l) => l.id === activeSpectralId) || null;
 
-  // Toggle or select a satellite map layer, automatically jumping to nearest available data date
+  // Toggle or select a satellite map layer:
+  // ALWAYS evaluate against primaryDate so modern layers jump back forward to the latest date!
   const handleToggleSpectralLayer = (layer) => {
     if (activeSpectralId === layer.id) {
+      // Toggled off: restore observation date to primaryDate
       setActiveSpectralId(null);
+      setSelectedDate(primaryDate);
       setDateNotice(null);
     } else {
       setActiveSpectralId(layer.id);
-      const nearestDate = getNearestAvailableDateForLayer(layer, selectedDate);
-      if (nearestDate !== selectedDate) {
-        setSelectedDate(nearestDate);
+      const targetDate = primaryDate;
+      const nearestDate = getNearestAvailableDateForLayer(layer, targetDate);
+
+      setSelectedDate(nearestDate);
+
+      if (nearestDate !== targetDate) {
         setDateNotice({
           layerName: layer.name,
           date: nearestDate,
-          reason: `No satellite data on ${selectedDate}. Jumped to nearest available:`,
+          reason: `No data for ${targetDate}. Jumped to nearest available:`,
         });
       } else {
         setDateNotice(null);
@@ -282,6 +290,10 @@ export default function App() {
   const handleDateChange = (e) => {
     const newDate = e.target.value;
     if (!newDate) return;
+
+    // Explicit user action updates their intended primary target date
+    setPrimaryDate(newDate);
+
     if (activeSpectral) {
       const nearest = getNearestAvailableDateForLayer(activeSpectral, newDate);
       setSelectedDate(nearest);
@@ -298,6 +310,16 @@ export default function App() {
       setSelectedDate(newDate);
       setDateNotice(null);
     }
+  };
+
+  const handleRestorePrimaryDate = () => {
+    if (activeSpectral) {
+      const nearest = getNearestAvailableDateForLayer(activeSpectral, primaryDate);
+      setSelectedDate(nearest);
+    } else {
+      setSelectedDate(primaryDate);
+    }
+    setDateNotice(null);
   };
 
   // Open the crop recommendations drawer (closes telemetry drawer so panels don't stack)
@@ -966,6 +988,16 @@ export default function App() {
               <span>
                 {dateNotice.reason} <strong>{dateNotice.date}</strong>
               </span>
+              {selectedDate !== primaryDate && (
+                <button
+                  type="button"
+                  onClick={handleRestorePrimaryDate}
+                  className="ml-1 px-1.5 py-0.5 rounded bg-amber-400/20 hover:bg-amber-400/30 text-amber-200 text-[10px] font-semibold transition"
+                  title={`Restore target date to ${primaryDate}`}
+                >
+                  Restore ({primaryDate})
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setDateNotice(null)}
