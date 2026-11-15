@@ -36,55 +36,55 @@ export default function DataVisualizer({ locationName = '', metrics = [], foreca
     const lbl = item.label?.toLowerCase() || '';
     if (lbl.includes('surface temp')) {
       return {
-        farmerTitle: '🌡️ Field Warmth',
-        meaning: 'Comfortable warmth for seedling germination',
+        farmerTitle: 'Surface Temperature',
+        meaning: 'Thermal conditions within target range for crop development',
       };
     }
     if (lbl.includes('soil moisture')) {
       return {
-        farmerTitle: '💧 Soil Wetness',
-        meaning: 'Good moisture — seeds will sprout easily without heavy watering',
+        farmerTitle: 'Soil Moisture (Root Zone)',
+        meaning: 'Adequate seedbed moisture for germination and root development',
       };
     }
     if (lbl.includes('rainfall') || lbl.includes('precip')) {
       return {
-        farmerTitle: '🌧️ Recent Rain',
-        meaning: 'Topsoil is well-hydrated and ready for sowing',
+        farmerTitle: 'Recent Precipitation',
+        meaning: 'Soil column moisture replenished by recent weather events',
       };
     }
     if (lbl.includes('heat stress')) {
       return {
-        farmerTitle: '☀️ Heat Stress Risk',
-        meaning: 'Zero burning risk — seedlings are completely safe',
+        farmerTitle: 'Heat Stress Risk',
+        meaning: 'Thermal conditions remain below critical stress thresholds',
       };
     }
     if (lbl.includes('humidity')) {
       return {
-        farmerTitle: '💨 Air Humidity',
-        meaning: 'Good air moisture prevents leaves from drying out',
+        farmerTitle: 'Relative Humidity',
+        meaning: 'Atmospheric vapor pressure deficit within safe transpiration bounds',
       };
     }
     if (lbl.includes('vegetation') || lbl.includes('ndvi')) {
       return {
-        farmerTitle: '🌿 Field Greenery (Health)',
-        meaning: 'High vegetation vigor and healthy green canopy',
+        farmerTitle: 'Vegetation Health (NDVI)',
+        meaning: 'High canopy reflectance indicating active photosynthetic vigor',
       };
     }
     if (lbl.includes('groundwater')) {
       return {
-        farmerTitle: '🌊 Deep Water Table',
-        meaning: 'Stable groundwater reserves for tube wells',
+        farmerTitle: 'Groundwater Storage',
+        meaning: 'Stable subsoil aquifer reserves for supplemental irrigation',
       };
     }
     if (lbl.includes('elevation')) {
       return {
-        farmerTitle: '⛰️ Field Elevation & Slope',
-        meaning: 'Gentle flat land — water drains naturally without pooling',
+        farmerTitle: 'Elevation & Terrain Slope',
+        meaning: 'Topography supports uniform natural drainage with minimal runoff risk',
       };
     }
     return {
       farmerTitle: item.label,
-      meaning: 'Local satellite measurement',
+      meaning: 'Calibrated Earth observation telemetry',
     };
   };
 
@@ -101,7 +101,7 @@ export default function DataVisualizer({ locationName = '', metrics = [], foreca
               : 'text-white/60 hover:text-white'
           }`}
         >
-          🌦️ Weather & Rain
+          Climate & Rainfall
         </button>
         <button
           type="button"
@@ -112,7 +112,7 @@ export default function DataVisualizer({ locationName = '', metrics = [], foreca
               : 'text-white/60 hover:text-white'
           }`}
         >
-          🌾 Why These Crops?
+          Selection Rationale
         </button>
         <button
           type="button"
@@ -123,7 +123,7 @@ export default function DataVisualizer({ locationName = '', metrics = [], foreca
               : 'text-white/60 hover:text-white'
           }`}
         >
-          🛰️ Satellite Sensors
+          Satellite Telemetry
         </button>
       </div>
 
@@ -249,7 +249,7 @@ export default function DataVisualizer({ locationName = '', metrics = [], foreca
               <div>Summer Peak: <strong className="text-amber-300">{Math.round(Math.max(...maxTemps))}°C</strong></div>
             </div>
             <p className="mt-1.5 text-[10px] text-emerald-300 text-center font-medium">
-              💡 Cool 12°C winter nights are ideal for Chickpea, Lentil & Mustard flowers.
+              Thermal regime is calibrated to regional growing season windows.
             </p>
           </div>
 
@@ -332,7 +332,7 @@ export default function DataVisualizer({ locationName = '', metrics = [], foreca
               </span>
             </div>
             <p className="mt-1.5 text-[10px] text-sky-200 text-center font-medium">
-              💡 Heavy monsoon rains leave abundant water trapped deep in your clay soil for winter crops.
+              Seasonal precipitation profile provides stored subsoil moisture for post-monsoon cropping.
             </p>
           </div>
         </div>
@@ -410,7 +410,7 @@ export default function DataVisualizer({ locationName = '', metrics = [], foreca
                   </strong>
                 </div>
                 <p className="mt-1 text-[11px] text-emerald-300/90 leading-tight">
-                  ✓ {trans.meaning}
+                  {trans.meaning}
                 </p>
               </div>
             );

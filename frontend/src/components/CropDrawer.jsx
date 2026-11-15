@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Sprout, Layers, Calendar, Droplets, Info, ArrowDown, MapPin } from 'lucide-react';
 import CropCard from './CropCard';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80';
@@ -47,18 +48,18 @@ function getScheduleCropImage(item, crops = []) {
 
 function getHandoverBenefit(current) {
     if (current.nitrogen_role === 'fixer') {
-        return '👉 Leaves +45 kg/ha of natural nitrogen in the ground — your next crop yields more with less chemical urea!';
+        return 'Fixes +45 kg/ha of biological nitrogen in the root zone, significantly reducing chemical fertilizer requirements for the next crop.';
     }
     if (current.root_depth_class === 'deep') {
-        return '👉 Deep roots break up hard clay underground, making it easier for the next crop to drink subsoil water.';
+        return 'Deep taproots break up dense subsoil horizons, improving capillary infiltration and aeration for subsequent rotations.';
     }
     if (current.is_cover_crop) {
-        return '👉 Thick green leaf cover smothers weeds and shields topsoil from drying under the scorching sun.';
+        return 'Dense canopy architecture suppresses weed seedbanks and limits evaporative moisture depletion from topsoil.';
     }
     if (current.nitrogen_role === 'light_feeder') {
-        return '👉 Gentle on the soil — keeps field moisture intact for the upcoming sowing season.';
+        return 'Low nutrient extraction rate maintains baseline moisture and nutrient reserves for upcoming plantings.';
     }
-    return '👉 Restores organic humus and builds soil fertility for the next planting.';
+    return 'Incorporates organic biomass residue, building active soil humus and biological activity.';
 }
 
 export default function CropDrawer({
@@ -102,7 +103,7 @@ export default function CropDrawer({
                             <div className="flex items-center gap-2">
                                 <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399]" />
                                 <span className="text-[11px] font-semibold tracking-wider text-emerald-400 uppercase">
-                                    👨‍🌾 Farmer's Smart Crop Advisory
+                                    Agricultural Decision Support Advisory
                                 </span>
                             </div>
                             <h2 className="mt-0.5 text-xl font-bold tracking-tight text-white">
@@ -112,7 +113,7 @@ export default function CropDrawer({
                             </h2>
                             {coordinates && (
                                 <p className="mt-0.5 text-xs text-white/60">
-                                    📍 {placeTitle}{coordinates.lat.toFixed(2)}°N, {coordinates.lon.toFixed(2)}°E
+                                    {placeTitle}{coordinates.lat.toFixed(2)}°N, {coordinates.lon.toFixed(2)}°E
                                     {soilTerrain && (
                                         <span className="ml-2 border-l border-white/15 pl-2 text-emerald-300 font-medium">
                                             Loam Soil (pH {soilTerrain.ph?.toFixed(1) || '6.5'} · {soilTerrain.clay_pct?.toFixed(0) || '25'}% Clay)
@@ -144,8 +145,8 @@ export default function CropDrawer({
                                     : 'text-white/60 hover:text-white'
                             }`}
                         >
-                            <span>🌾</span>
-                            <span>Best Crops for Your Land ({crops.length})</span>
+                            <Sprout size={14} />
+                            <span>Recommended Crops ({crops.length})</span>
                         </button>
                         <button
                             type="button"
@@ -156,7 +157,7 @@ export default function CropDrawer({
                                     : 'text-white/60 hover:text-white'
                             }`}
                         >
-                            <span>🔄</span>
+                            <Layers size={14} />
                             <span>3-Year Rotation Plan</span>
                         </button>
                     </div>
@@ -174,7 +175,7 @@ export default function CropDrawer({
                                 }`}
                                 title="Restores natural soil nutrients and cuts chemical fertilizer bills"
                             >
-                                🌱 Soil-Builder Plan
+                                Soil-Regenerative Plan
                             </button>
                             <button
                                 type="button"
@@ -186,7 +187,7 @@ export default function CropDrawer({
                                 }`}
                                 title="Survives dry winters with minimum watering"
                             >
-                                💧 Water-Saver Plan
+                                Water-Resilient Plan
                             </button>
                             <button
                                 type="button"
@@ -198,7 +199,7 @@ export default function CropDrawer({
                                 }`}
                                 title="Standard cash crop rotation"
                             >
-                                🚜 Cash Crop Plan
+                                Baseline Commercial Plan
                             </button>
                         </div>
                     )}
@@ -220,9 +221,9 @@ export default function CropDrawer({
                         /* Single-Season Crop Card Grid */
                         <div className="space-y-4">
                             <div className="rounded-2xl border border-emerald-500/20 bg-emerald-950/20 p-3 text-xs text-emerald-200/90 flex items-center gap-2">
-                                <span className="text-base">💡</span>
+                                <Info size={14} className="text-emerald-400 shrink-0" />
                                 <span>
-                                    <strong>Farmer Tip:</strong> These {crops.length} crops are specifically matched to the seasonal climate, soil profile, and regional agricultural demand in {locationName || 'your area'}.
+                                    <strong>Agronomic Profile:</strong> These {crops.length} crops are calibrated to seasonal thermal windows, soil profile, and regional agricultural demand in {locationName || 'your area'}.
                                 </span>
                             </div>
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -251,33 +252,33 @@ export default function CropDrawer({
                                             <div className="flex items-center justify-between border-b border-white/10 pb-3">
                                                 <div>
                                                     <span className="text-[11px] font-bold tracking-wider text-emerald-400 uppercase">
-                                                        🏆 Farm Health & Soil Protection
+                                                        Soil Stewardship & Agro-Ecosystem Index
                                                     </span>
                                                     <div className="text-2xl font-black text-emerald-400">
                                                         {scoreVal} <span className="text-sm font-medium text-white/50">/ 100 ({scoreVerdict})</span>
                                                     </div>
                                                 </div>
                                                 <div className="text-right text-xs text-white/70">
-                                                    <div>Land Match: <strong className="text-emerald-300">{fitPct}%</strong></div>
+                                                    <div>Biophysical Fit: <strong className="text-emerald-300">{fitPct}%</strong></div>
                                                     <div>Drought Safety: <strong className="text-sky-300">{droughtPct}%</strong></div>
                                                 </div>
                                             </div>
 
                                             <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
                                                 <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/30 p-2.5">
-                                                    <span className="text-white/60">🛡️ Soil Covered</span>
+                                                    <span className="text-white/60">Soil Cover Index</span>
                                                     <div className="mt-0.5 text-sm font-bold text-emerald-300">
                                                         {coverPct}%
                                                     </div>
                                                 </div>
                                                 <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/30 p-2.5">
-                                                    <span className="text-white/60">🧪 Free Fertilizer</span>
+                                                    <span className="text-white/60">Biological Nitrogen</span>
                                                     <div className="mt-0.5 text-sm font-bold text-emerald-300">
                                                         {nBal}/100
                                                     </div>
                                                 </div>
                                                 <div className="rounded-xl border border-sky-500/20 bg-sky-950/30 p-2.5">
-                                                    <span className="text-white/60">🌾 Root Health</span>
+                                                    <span className="text-white/60">Root Diversity</span>
                                                     <div className="mt-0.5 text-sm font-bold text-sky-300">
                                                         {rootDiv}/100
                                                     </div>
@@ -291,9 +292,9 @@ export default function CropDrawer({
                                 <div className="rounded-2xl border border-white/15 bg-neutral-900/60 p-4 backdrop-blur-md">
                                     <div className="flex items-center justify-between text-xs text-white/70">
                                         <span className="font-bold tracking-wider uppercase text-[11px] text-white/60">
-                                            📅 3-Year Field Calendar (Continuous Green Cover)
+                                            36-Month Agronomic Succession Calendar
                                         </span>
-                                        <span className="text-emerald-400 font-semibold">Protected All Year</span>
+                                        <span className="text-emerald-400 font-semibold">Continuous Soil Cover</span>
                                     </div>
 
                                     {/* Timeline Bar */}
@@ -321,16 +322,16 @@ export default function CropDrawer({
 
                                     {/* Month & Season Markers */}
                                     <div className="mt-1.5 flex justify-between text-[10px] text-white/50">
-                                        <span>Year 1 (Monsoon ➔ Winter)</span>
-                                        <span>Year 2 (Legumes)</span>
-                                        <span>Year 3 (Harvest & Enrich)</span>
+                                        <span>Year 1 (Monsoon / Post-Monsoon)</span>
+                                        <span>Year 2 (Legume Succession)</span>
+                                        <span>Year 3 (Harvest & Stewardship)</span>
                                     </div>
                                 </div>
 
                                 {/* Connected Flow Chart Sequence */}
                                 <div>
                                     <h3 className="mb-3 text-xs font-bold tracking-wider text-emerald-300 uppercase flex items-center gap-1.5">
-                                        <span>🌱 Sowing Sequence & Soil Handover</span>
+                                        <span>Sowing Sequence & Succession Dynamics</span>
                                     </h3>
 
                                     <div className="relative pl-6 space-y-4">
@@ -389,29 +390,30 @@ export default function CropDrawer({
 
                                                                 {/* Planting Window */}
                                                                 <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-300 font-semibold">
-                                                                    <span>📅 {item.sow_label} → {item.harvest_label} · {item.cycle_months} Months Season</span>
+                                                                    <Calendar size={12} className="text-emerald-400" />
+                                                                    <span>{item.sow_label} → {item.harvest_label} · {item.cycle_months} Mo Window</span>
                                                                 </div>
 
                                                                 {/* Helpful Agronomic Parameters Badges */}
                                                                 <div className="mt-2.5 flex flex-wrap gap-1.5 text-[11px]">
                                                                     {item.nitrogen_role === 'fixer' && (
                                                                         <span className="rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 font-medium text-emerald-300">
-                                                                            🌿 Adds Natural Nitrogen (+45 kg/ha)
+                                                                            Adds Natural Nitrogen (+45 kg/ha)
                                                                         </span>
                                                                     )}
                                                                     {item.nitrogen_role === 'heavy_feeder' && (
                                                                         <span className="rounded-lg border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 font-medium text-amber-300">
-                                                                            🌾 High-Yielding Cash Crop
+                                                                            High-Yielding Cash Crop
                                                                         </span>
                                                                     )}
                                                                     {item.nitrogen_role === 'light_feeder' && (
                                                                         <span className="rounded-lg border border-teal-500/30 bg-teal-500/15 px-2 py-0.5 font-medium text-teal-300">
-                                                                            🍃 Gentle Soil User
+                                                                            Light Feeder / Soil Preserving
                                                                         </span>
                                                                     )}
 
                                                                     <span className="rounded-lg border border-sky-500/30 bg-sky-500/15 px-2 py-0.5 font-medium text-sky-300">
-                                                                        {item.root_depth_class === 'deep' ? '💧 Deep Taproot (Drought Hardy)' : '💧 Medium Root Depth'}
+                                                                        {item.root_depth_class === 'deep' ? 'Deep Taproot (Drought Hardy)' : 'Medium Root Depth'}
                                                                     </span>
                                                                 </div>
                                                             </div>
@@ -421,7 +423,7 @@ export default function CropDrawer({
                                                     {/* Handover Flow Connector Arrow to Next Crop */}
                                                     {!isLast && (
                                                         <div className="my-2 ml-4 flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-950/20 px-3 py-1.5 text-xs text-emerald-300">
-                                                            <span className="text-sm">👇</span>
+                                                            <ArrowDown size={13} className="text-emerald-400 shrink-0" />
                                                             <span className="text-[11px] font-medium leading-relaxed">
                                                                 {benefit}
                                                             </span>

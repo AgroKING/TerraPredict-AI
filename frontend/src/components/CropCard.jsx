@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Droplets, Calendar, Sparkles, Sprout, CheckCircle2 } from 'lucide-react';
+import { Droplets, Calendar, Sparkles, Sprout, CheckCircle2, Thermometer } from 'lucide-react';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80';
 
@@ -94,10 +94,10 @@ export default function CropCard({ crop }) {
                 {/* Sowing Season tag bottom left of photo */}
                 <span className="absolute bottom-2 left-2.5 rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white/80 backdrop-blur-sm">
                     {details.sowingWindow?.includes('Rabi')
-                        ? '🌾 Winter Rabi Crop'
+                        ? 'Winter Season'
                         : details.sowingWindow?.includes('Kharif')
-                        ? '🌧️ Monsoon Kharif Crop'
-                        : '🌱 Rabi Sowing'}
+                        ? 'Monsoon Season'
+                        : 'Optimal Window'}
                 </span>
             </div>
 
@@ -116,16 +116,16 @@ export default function CropCard({ crop }) {
                 <div className="flex items-center justify-between text-white/80">
                     <span className="flex items-center gap-1.5 text-white/50">
                         <Droplets size={13} className="text-sky-400" />
-                        <span>Water Needed:</span>
+                        <span>Water Demand:</span>
                     </span>
                     <span className="font-semibold text-white">
-                        {isLowWater ? 'Low' : 'Normal'} ({metrics.waterNeed?.split(' ')[0] || '400'} mm · 1–2 waterings)
+                        {isLowWater ? 'Low' : 'Normal'} ({metrics.waterNeed?.split(' ')[0] || '400'} mm)
                     </span>
                 </div>
                 <div className="flex items-center justify-between text-white/80">
                     <span className="flex items-center gap-1.5 text-white/50">
                         <Calendar size={13} className="text-amber-400" />
-                        <span>Harvest Time:</span>
+                        <span>Growth Cycle:</span>
                     </span>
                     <span className="font-semibold text-white">
                         {metrics.growthCycle || '110 Days (~3.5 mo)'}
@@ -142,35 +142,41 @@ export default function CropCard({ crop }) {
                 <div className="overflow-hidden">
                     <div className="space-y-2.5 rounded-2xl border border-white/10 bg-black/35 p-3 text-xs text-white/85">
                         <div className="flex justify-between items-center">
-                            <span className="text-white/50">🌡️ Growing Weather</span>
+                            <span className="flex items-center gap-1.5 text-white/50">
+                                <Thermometer size={13} className="text-orange-400" />
+                                <span>Thermal Range</span>
+                            </span>
                             <span className="font-medium text-white">
-                                {metrics.soilTemp?.includes('°C') ? metrics.soilTemp : '15°C – 25°C (Mild winter days)'}
+                                {metrics.soilTemp?.includes('°C') ? metrics.soilTemp : '15°C – 25°C'}
                             </span>
                         </div>
                         <div className="flex justify-between items-center">
-                            <span className="text-white/50">📅 Sowing Month</span>
+                            <span className="flex items-center gap-1.5 text-white/50">
+                                <Calendar size={13} className="text-sky-400" />
+                                <span>Sowing Window</span>
+                            </span>
                             <span className="font-medium text-emerald-300">
-                                {details.sowingWindow || 'Mid-Nov to Dec (Rabi)'}
+                                {details.sowingWindow || 'Optimal Planting Window'}
                             </span>
                         </div>
                         <div className="border-t border-white/10 pt-2 flex flex-col gap-1">
                             <span className="text-[11px] font-semibold text-emerald-400">
-                                {isNitrogenFixer ? '🌿 Soil & Fertilizer Benefit:' : '🌾 Farm Benefit:'}
+                                {isNitrogenFixer ? 'Soil Stewardship Benefit:' : 'Agronomic Benefit:'}
                             </span>
                             <p className="text-[11px] leading-relaxed text-white/75">
                                 {details.nitrogenImpact ||
                                     (isNitrogenFixer
-                                        ? 'Adds natural nitrogen into soil, saving 1–2 bags of urea for next season.'
-                                        : 'Light soil feeder. Protects field structure with deep roots.')}
+                                        ? 'Fixes atmospheric nitrogen into the root zone, improving soil health for subsequent rotations.'
+                                        : 'Light soil feeder. Protects field structure with deep rooting profile.')}
                             </p>
                         </div>
                         <div className="border-t border-white/10 pt-2 flex flex-col gap-1">
                             <span className="text-[11px] font-semibold text-sky-400">
-                                💡 Why grow this on your land?
+                                Agronomic Rationale:
                             </span>
                             <p className="text-[11px] leading-relaxed text-white/75">
                                 {details.rotationBenefit ||
-                                    'Excellent cash crop with high local market demand. Thrives in your clay-rich soil and stays green with minimal winter watering.'}
+                                    'High agro-feasibility score calibrated to local thermal windows and moisture availability.'}
                             </p>
                         </div>
                     </div>

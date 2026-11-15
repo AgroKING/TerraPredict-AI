@@ -523,7 +523,7 @@ def predict_crops(req: PredictRequest):
             "expandedDetails": {
                 "rotationBenefit": farmer_tip,
                 "nitrogenImpact": (
-                    "🌿 Adds Natural Nitrogen (+45 kg/ha) — Cuts urea fertilizer cost"
+                    "Adds Natural Nitrogen (+45 kg/ha) — Reduces synthetic fertilizer requirements"
                     if is_fixer
                     else f"Light soil user ({n_impact}) — safe for continuous cropping"
                 ),

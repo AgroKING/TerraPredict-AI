@@ -951,7 +951,7 @@ export default function App() {
           <div className="drawer-header">
             <div>
               <span className="drawer-badge">
-                <Sparkles size={13} /> 🌱 FIELD CONDITIONS & CLIMATE GUIDE
+                <Sparkles size={13} /> FIELD CONDITIONS & CLIMATE ADVISORY
               </span>
               <h3>{selectedLocation.name} Field</h3>
               <p className="drawer-coords">
@@ -1004,7 +1004,7 @@ export default function App() {
                 className="recommend-route-btn"
                 onClick={handleOpenCrops}
               >
-                <span>🌾 View Best Crops & Rotation Plan</span>
+                <span>View Crop Recommendations & Rotation Strategy</span>
                 <ArrowRight size={17} />
               </button>
             </>
@@ -1075,27 +1075,27 @@ export default function App() {
 
           <div className="dataset-grid">
             <div className="dataset-card">
-              <h4>💧 Soil Wetness & Groundwater (SMAP & GRACE)</h4>
+              <h4>Soil Moisture & Groundwater Dynamics (SMAP & GRACE)</h4>
               <p>
-                Measures moisture trapped in topsoil and deep underground reserves to tell you whether seeds will germinate and when irrigation is needed.
+                Measures surface soil moisture and deeper root-zone retention alongside regional gravity-derived aquifers to quantify germination viability and supplemental irrigation thresholds.
               </p>
             </div>
             <div className="dataset-card">
-              <h4>🌡️ Field Warmth & Heat Stress (MODIS & ECOSTRESS)</h4>
+              <h4>Thermal Regimes & Heat Stress (MODIS & ECOSTRESS)</h4>
               <p>
-                Monitors daily ground warmth to ensure your crops stay within safe growing temperatures without risk of frost shock or heat burning.
+                Tracks daily land surface temperature, extreme thermal variance, and evapotranspiration anomalies to safeguard against frost vulnerability and critical-flowering heat shock.
               </p>
             </div>
             <div className="dataset-card">
-              <h4>🌧️ Rainfall & Storm Patterns (GPM & POWER)</h4>
+              <h4>Precipitation Dynamics (GPM & POWER)</h4>
               <p>
-                Forecasts seasonal monsoon rains and dry winter spells so you can plant with confidence and harvest at the right time.
+                Synthesizes calibrated satellite precipitation estimates and historical weather models to identify optimal sowing windows and seasonal water deficit risks.
               </p>
             </div>
             <div className="dataset-card">
-              <h4>🌿 Crop Health & Field Drainage (Landsat & SRTM)</h4>
+              <h4>Vegetation Indices & Drainage (Landsat & SRTM)</h4>
               <p>
-                Scans your field’s green canopy health and natural hillside slopes to prevent waterlogging and soil erosion.
+                Analyzes multi-spectral canopy reflectance indices (NDVI) alongside high-resolution elevation topology to model overland drainage, runoff, and erosion susceptibility.
               </p>
             </div>
           </div>
