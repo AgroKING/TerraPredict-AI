@@ -1,2 +1,12 @@
 node_modules
 .env
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+dist
+ml/data/
+data/
+
+
