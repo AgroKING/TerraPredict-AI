@@ -219,46 +219,57 @@ export default function CropDrawer({
                         /* Multi-Year Rotation Flow Chart */
                         currentStrategyData ? (
                             <div className="space-y-6">
-                                {/* Simplified Farm Health Scorecard */}
-                                {currentStrategyData.soil_stewardship && (
-                                    <div className="rounded-2xl border border-white/15 bg-neutral-900/60 p-4 backdrop-blur-md">
-                                        <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                                            <div>
-                                                <span className="text-[11px] font-bold tracking-wider text-emerald-400 uppercase">
-                                                    🏆 Farm Health & Soil Protection
-                                                </span>
-                                                <div className="text-2xl font-black text-emerald-400">
-                                                    88 <span className="text-sm font-medium text-white/50">/ 100 (Excellent)</span>
-                                                </div>
-                                            </div>
-                                            <div className="text-right text-xs text-white/70">
-                                                <div>Land Match: <strong className="text-emerald-300">95% High</strong></div>
-                                                <div>Drought Safety: <strong className="text-sky-300">92% Hardy</strong></div>
-                                            </div>
-                                        </div>
+                                {/* Dynamic Farm Health Scorecard */}
+                                {currentStrategyData.soil_stewardship && (() => {
+                                    const steward = currentStrategyData.soil_stewardship || {};
+                                    const scoreVal = Math.round(steward.composite_stewardship_score ?? 82);
+                                    const scoreVerdict = scoreVal >= 80 ? 'Excellent' : scoreVal >= 65 ? 'Good' : 'Moderate';
+                                    const fitPct = Math.round((currentStrategyData.mean_biophysical_fit ?? 0.85) * 100);
+                                    const droughtPct = Math.round((currentStrategyData.mean_drought_resilience ?? 0.80) * 100);
+                                    const coverPct = Math.round(steward.living_cover_ratio ?? 90);
+                                    const nBal = Math.round(steward.biological_n_balance ?? 65);
+                                    const rootDiv = Math.round(steward.taxonomic_root_diversity ?? 60);
 
-                                        <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
-                                            <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/30 p-2.5">
-                                                <span className="text-white/60">🛡️ Soil Covered</span>
-                                                <div className="mt-0.5 text-sm font-bold text-emerald-300">
-                                                    100% (No Weeds)
+                                    return (
+                                        <div className="rounded-2xl border border-white/15 bg-neutral-900/60 p-4 backdrop-blur-md">
+                                            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                                                <div>
+                                                    <span className="text-[11px] font-bold tracking-wider text-emerald-400 uppercase">
+                                                        🏆 Farm Health & Soil Protection
+                                                    </span>
+                                                    <div className="text-2xl font-black text-emerald-400">
+                                                        {scoreVal} <span className="text-sm font-medium text-white/50">/ 100 ({scoreVerdict})</span>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right text-xs text-white/70">
+                                                    <div>Land Match: <strong className="text-emerald-300">{fitPct}%</strong></div>
+                                                    <div>Drought Safety: <strong className="text-sky-300">{droughtPct}%</strong></div>
                                                 </div>
                                             </div>
-                                            <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/30 p-2.5">
-                                                <span className="text-white/60">🧪 Free Fertilizer</span>
-                                                <div className="mt-0.5 text-sm font-bold text-emerald-300">
-                                                    High (+45 kg N)
+
+                                            <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+                                                <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/30 p-2.5">
+                                                    <span className="text-white/60">🛡️ Soil Covered</span>
+                                                    <div className="mt-0.5 text-sm font-bold text-emerald-300">
+                                                        {coverPct}%
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div className="rounded-xl border border-sky-500/20 bg-sky-950/30 p-2.5">
-                                                <span className="text-white/60">🌾 Root Health</span>
-                                                <div className="mt-0.5 text-sm font-bold text-sky-300">
-                                                    Deep & Loose
+                                                <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/30 p-2.5">
+                                                    <span className="text-white/60">🧪 Free Fertilizer</span>
+                                                    <div className="mt-0.5 text-sm font-bold text-emerald-300">
+                                                        {nBal}/100
+                                                    </div>
+                                                </div>
+                                                <div className="rounded-xl border border-sky-500/20 bg-sky-950/30 p-2.5">
+                                                    <span className="text-white/60">🌾 Root Health</span>
+                                                    <div className="mt-0.5 text-sm font-bold text-sky-300">
+                                                        {rootDiv}/100
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                )}
+                                    );
+                                })()}
 
                                 {/* Visual 36-Month Timeline Bar */}
                                 <div className="rounded-2xl border border-white/15 bg-neutral-900/60 p-4 backdrop-blur-md">

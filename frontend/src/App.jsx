@@ -40,6 +40,17 @@ const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services';
 const SPECTRAL_GRADIENT =
   'linear-gradient(90deg, #1e3a8a 0%, #06b6d4 25%, #22c55e 50%, #eab308 75%, #ef4444 100%)';
 
+function getGibsSafeDate(date) {
+  if (!date) return '2024-05-01';
+  // NASA GIBS WMTS tiles are available up to 2024. Clamp future simulated years to 2024.
+  const parts = date.split('-');
+  const year = parseInt(parts[0], 10);
+  if (year > 2024) {
+    return `2024-${parts[1] || '05'}-${parts[2] || '01'}`;
+  }
+  return date;
+}
+
 const SPECTRAL_LAYERS = [
   {
     id: 'temperature',
@@ -49,7 +60,7 @@ const SPECTRAL_LAYERS = [
     unit: '-20°C to 45°C',
     gradient: SPECTRAL_GRADIENT,
     buildUrl: (date) =>
-      `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Land_Surface_Temp_Day/default/${date}/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png`,
+      `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Land_Surface_Temp_Day/default/${getGibsSafeDate(date)}/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png`,
     maxzoom: 7,
   },
   {
@@ -60,7 +71,7 @@ const SPECTRAL_LAYERS = [
     unit: 'Dry (0.05) → Wet (0.50)',
     gradient: 'linear-gradient(90deg, #92400e, #f59e0b, #38bdf8, #1d4ed8)',
     buildUrl: (date) =>
-      `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/SMAP_L4_Analyzed_Surface_Soil_Moisture/default/${date}/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png`,
+      `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/SMAP_L4_Analyzed_Surface_Soil_Moisture/default/${getGibsSafeDate(date)}/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png`,
     maxzoom: 6,
   },
   {
@@ -71,7 +82,7 @@ const SPECTRAL_LAYERS = [
     unit: '0 to 50+ mm/day',
     gradient: 'linear-gradient(90deg, #0f172a, #0284c7, #38bdf8, #a855f7, #f43f5e)',
     buildUrl: (date) =>
-      `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/IMERG_Precipitation_Rate/default/${date}/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png`,
+      `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/IMERG_Precipitation_Rate/default/${getGibsSafeDate(date)}/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png`,
     maxzoom: 6,
   },
   {
@@ -82,7 +93,7 @@ const SPECTRAL_LAYERS = [
     unit: 'Stressed (-0.1) → Lush Green (0.9)',
     gradient: 'linear-gradient(90deg, #78350f, #d97706, #bef264, #15803d)',
     buildUrl: (date) =>
-      `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_NDVI_8Day/default/${date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png`,
+      `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_NDVI_8Day/default/${getGibsSafeDate(date)}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png`,
     maxzoom: 9,
   },
   {
