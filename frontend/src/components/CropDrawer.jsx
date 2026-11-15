@@ -19,11 +19,14 @@ const LOCAL_CROP_NAMES = {
     'siyambala': 'Tamarind (Imli / Siyambala - Hardy Tree)',
 };
 
-function getFarmerFriendlyCropName(name) {
+function getFarmerFriendlyCropName(name, coordinates) {
     if (!name) return 'Crop';
-    const lower = name.toLowerCase();
-    for (const [key, val] of Object.entries(LOCAL_CROP_NAMES)) {
-        if (lower.includes(key)) return val;
+    const isSouthAsia = coordinates && coordinates.lat >= 5 && coordinates.lat <= 38 && coordinates.lon >= 65 && coordinates.lon <= 98;
+    if (isSouthAsia) {
+        const lower = name.toLowerCase();
+        for (const [key, val] of Object.entries(LOCAL_CROP_NAMES)) {
+            if (lower.includes(key)) return val;
+        }
     }
     return name;
 }
@@ -61,6 +64,8 @@ function getHandoverBenefit(current) {
 export default function CropDrawer({
     isOpen,
     onClose,
+    locationName = '',
+    isLoading = false,
     coordinates,
     crops = [],
     strategies = null,
@@ -71,6 +76,7 @@ export default function CropDrawer({
 
     const currentStrategyData = strategies ? strategies[activeStrategy] : null;
     const schedule = currentStrategyData?.schedule || [];
+    const placeTitle = locationName ? `${locationName} · ` : '';
 
     return (
         <>
@@ -106,10 +112,10 @@ export default function CropDrawer({
                             </h2>
                             {coordinates && (
                                 <p className="mt-0.5 text-xs text-white/60">
-                                    📍 Field Coordinates: {coordinates.lat.toFixed(2)}°N, {coordinates.lon.toFixed(2)}°E
+                                    📍 {placeTitle}{coordinates.lat.toFixed(2)}°N, {coordinates.lon.toFixed(2)}°E
                                     {soilTerrain && (
                                         <span className="ml-2 border-l border-white/15 pl-2 text-emerald-300 font-medium">
-                                            Rich Loam Soil (pH {soilTerrain.ph?.toFixed(1) || '6.5'} · {soilTerrain.clay_pct?.toFixed(0) || '25'}% Clay)
+                                            Loam Soil (pH {soilTerrain.ph?.toFixed(1) || '6.5'} · {soilTerrain.clay_pct?.toFixed(0) || '25'}% Clay)
                                         </span>
                                     )}
                                 </p>
@@ -199,14 +205,24 @@ export default function CropDrawer({
                 </div>
 
                 {/* Content Area */}
-                <div className="flex-1 overflow-y-auto px-6 py-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="relative flex-1 overflow-y-auto px-6 py-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    {isLoading && (
+                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 backdrop-blur-md">
+                            <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent mb-3" />
+                            <p className="text-sm font-semibold text-emerald-300">
+                                Analyzing satellite telemetry & crops for {locationName || 'location'}...
+                            </p>
+                            <p className="text-xs text-white/50 mt-1">Screening FAO EcoCrop biophysical database</p>
+                        </div>
+                    )}
+
                     {viewMode === 'crops' ? (
                         /* Single-Season Crop Card Grid */
                         <div className="space-y-4">
                             <div className="rounded-2xl border border-emerald-500/20 bg-emerald-950/20 p-3 text-xs text-emerald-200/90 flex items-center gap-2">
                                 <span className="text-base">💡</span>
                                 <span>
-                                    <strong>Farmer Tip:</strong> These 10 crops are specifically matched to your local winter temperatures, clay soil, and traditional Odisha market demand.
+                                    <strong>Farmer Tip:</strong> These {crops.length} crops are specifically matched to the seasonal climate, soil profile, and regional agricultural demand in {locationName || 'your area'}.
                                 </span>
                             </div>
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -297,7 +313,7 @@ export default function CropDrawer({
                                                     key={idx}
                                                     style={{ width: `${pct}%` }}
                                                     className={`h-full ${color}/80 hover:${color} transition-all border-r border-black/40 first:rounded-l-md last:rounded-r-md`}
-                                                    title={`${getFarmerFriendlyCropName(item.crop_name)}: ${item.cycle_months} mo (${item.sow_label} → ${item.harvest_label})`}
+                                                    title={`${getFarmerFriendlyCropName(item.crop_name, coordinates)}: ${item.cycle_months} mo (${item.sow_label} → ${item.harvest_label})`}
                                                 />
                                             );
                                         })}
@@ -325,7 +341,7 @@ export default function CropDrawer({
                                             const image = getScheduleCropImage(item, crops);
                                             const isLast = idx === schedule.length - 1;
                                             const benefit = getHandoverBenefit(item);
-                                            const friendlyName = getFarmerFriendlyCropName(item.crop_name);
+                                            const friendlyName = getFarmerFriendlyCropName(item.crop_name, coordinates);
 
                                             return (
                                                 <div key={idx} className="relative">

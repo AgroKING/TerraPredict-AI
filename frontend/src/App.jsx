@@ -991,6 +991,7 @@ export default function App() {
             <>
               {/* INTERACTIVE DATA VISUALIZER: CHARTS, WHY CROPS & INDICATORS */}
               <DataVisualizer
+                locationName={selectedLocation?.name}
                 metrics={siteTelemetry.metrics}
                 forecast={siteTelemetry.forecast}
                 soilTerrain={siteTelemetry.soil_terrain}
@@ -1034,6 +1035,8 @@ export default function App() {
         <CropDrawer
           isOpen={isCropDrawerOpen}
           onClose={() => setIsCropDrawerOpen(false)}
+          locationName={selectedLocation?.name}
+          isLoading={telemetryLoading}
           coordinates={{ lat: selectedLocation.lat, lon: selectedLocation.lng }}
           crops={siteTelemetry?.crops?.length ? siteTelemetry.crops : MOCK_CROPS}
           strategies={siteTelemetry?.strategies}

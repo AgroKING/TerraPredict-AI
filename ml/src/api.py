@@ -35,12 +35,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Curated crop imagery for high-fidelity UI rendering
-FARMER_FRIENDLY_NAMES = {
+# Regional agricultural vernacular naming dictionaries
+SOUTH_ASIA_NAMES = {
     "chickpea": "Chickpea (Chana / Bengal Gram)",
     "gram": "Chickpea (Chana / Bengal Gram)",
+    "indian_mustard": "Indian Mustard (Sarson / Rai)",
     "mustard": "Indian Mustard (Sarson / Rai)",
-    "brassica": "Indian Mustard (Sarson / Rai)",
+    "brassica_juncea": "Indian Mustard (Sarson / Rai)",
     "groundnut": "Groundnut (Mungfali / Peanut)",
     "peanut": "Groundnut (Mungfali / Peanut)",
     "lentil": "Lentil (Masoor Dal)",
@@ -50,19 +51,62 @@ FARMER_FRIENDLY_NAMES = {
     "cowpea": "Cowpea (Lobia / Chawli)",
     "black-eyed pea": "Black-Eyed Pea (White Lobia)",
     "eggplant": "Eggplant (Baingan / Brinjal)",
-    "bambara": "Bambara Groundnut (Earth Nut)",
     "wheat": "Winter Wheat (Gehun)",
     "sunflower": "Sunflower (Surajmukhi)",
     "sesame": "Sesame (Til)",
-    "soybean": "Soybean (Bhat)",
+    "finger_millet": "Finger Millet (Ragi / Mandia)",
+    "pearl_millet": "Pearl Millet (Bajra)",
 }
 
-def get_farmer_crop_name(raw_name: str, crop_id: str) -> str:
+EAST_ASIA_NAMES = {
+    "brassica_chinensis": "Bok Choy (Chinese Cabbage)",
+    "chinese_cabbage": "Bok Choy / Chinese Cabbage",
+    "paddy_rice": "Paddy Rice (Kome)",
+    "soybean": "Soybean (Edamame)",
+    "sweet_potato": "Sweet Potato (Satsumaimo)",
+    "buckwheat": "Buckwheat (Soba)",
+}
+
+EUROPE_NAMES = {
+    "winter_wheat": "Winter Wheat",
+    "winter_barley": "Winter Barley",
+    "spring_barley": "Spring Barley",
+    "sugar_beet": "Sugar Beet",
+    "rapeseed": "Winter Rapeseed / Canola",
+    "spring_field_pea": "Field Pea",
+}
+
+NORTH_AMERICA_NAMES = {
+    "grain_maize": "Field Corn / Maize",
+    "soybean": "Soybean",
+    "winter_wheat": "Winter Wheat",
+    "spring_wheat": "Spring Wheat",
+    "sunflower": "Oilseed Sunflower",
+}
+
+def get_farmer_crop_name(raw_name: str, crop_id: str, region_name: str = "global") -> str:
     name_lower = f"{raw_name.lower()} {crop_id.lower()}"
-    for token, friendly in FARMER_FRIENDLY_NAMES.items():
-        if token in name_lower:
-            return friendly
-    return raw_name
+
+    if region_name == "south_asia":
+        for token, friendly in SOUTH_ASIA_NAMES.items():
+            if token in name_lower or token in crop_id.lower():
+                return friendly
+    elif region_name == "east_asia":
+        for token, friendly in EAST_ASIA_NAMES.items():
+            if token in name_lower or token in crop_id.lower():
+                return friendly
+    elif region_name == "europe":
+        for token, friendly in EUROPE_NAMES.items():
+            if token in name_lower or token in crop_id.lower():
+                return friendly
+    elif region_name == "north_america":
+        for token, friendly in NORTH_AMERICA_NAMES.items():
+            if token in name_lower or token in crop_id.lower():
+                return friendly
+
+    # Fallback cleanup: capitalize words and strip raw technical prefixes
+    clean_name = raw_name.replace("_", " ").title()
+    return clean_name
 
 WILD_NON_CULTIVATED_TOKENS = {
     "urochloa", "aeschynomene", "bothriochloa", "dichanthium", "chloris",
@@ -402,8 +446,8 @@ def predict_crops(req: PredictRequest):
                 trad_score = weight
                 break
 
-        # Composite score factoring local tradition and climate adaptation
-        composite_score = (0.40 * b_fit) + (0.25 * d_res) + (0.35 * trad_score)
+        # Composite score: biophysical climate match dominates, regional affinity acts as tie-breaker
+        composite_score = (0.65 * b_fit) + (0.20 * d_res) + (0.15 * trad_score)
 
         scored_candidates.append({
             "row": row,
@@ -450,7 +494,7 @@ def predict_crops(req: PredictRequest):
             else "-15 kg/ha"
         )
 
-        farmer_name = get_farmer_crop_name(str(c_info["crop_name"]), crop_id)
+        farmer_name = get_farmer_crop_name(str(c_info["crop_name"]), crop_id, region_name=region_name)
         is_fixer = "fixer" in n_role.lower()
 
         water_level = "Low" if ropmn <= 450 else "Medium" if ropmn <= 700 else "High"

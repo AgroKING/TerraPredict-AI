@@ -3,8 +3,14 @@ import { Thermometer, Droplets, Sprout, Award, CheckCircle, ShieldCheck } from '
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-export default function DataVisualizer({ metrics = [], forecast = null, soilTerrain = null, crops = [] }) {
+export default function DataVisualizer({ locationName = '', metrics = [], forecast = null, soilTerrain = null, crops = [] }) {
   const [activeTab, setActiveTab] = useState('graphs'); // 'graphs' | 'logic' | 'indicators'
+
+  // Extract top crop names dynamically for logic explanations
+  const topCropNames = crops && crops.length > 0
+    ? crops.slice(0, 3).map((c) => c.name).join(', ')
+    : 'selected crops';
+  const displayLocation = locationName || 'your farm';
 
   const monthlyOutlook = forecast?.monthly_outlook?.slice(0, 12) || [];
 
@@ -338,40 +344,40 @@ export default function DataVisualizer({ metrics = [], forecast = null, soilTerr
           <div className="rounded-xl border border-emerald-500/30 bg-neutral-900/70 p-3 backdrop-blur-md">
             <div className="flex items-center gap-2 font-bold text-emerald-300 mb-1">
               <Thermometer size={16} />
-              <span>1. Perfect Weather Match (No Frost Shock)</span>
+              <span>1. Calibrated to Local Climate</span>
             </div>
             <p className="text-[11px] text-white/80 leading-relaxed">
-              Your winter days stay pleasantly warm (20°C–28°C) with cool 12°C nights. Crops like <strong>Chickpea, Mustard, and Lentil</strong> thrive in this climate and won’t suffer frost or premature heat damage.
+              Targeted for <strong>{displayLocation}</strong>: Seasonal temperatures and growing season windows were screened against FAO EcoCrop databases. Crops like <strong>{topCropNames}</strong> thrive within this regional thermal range without premature heat stress or frost damage.
             </p>
           </div>
 
           <div className="rounded-xl border border-sky-500/30 bg-neutral-900/70 p-3 backdrop-blur-md">
             <div className="flex items-center gap-2 font-bold text-sky-300 mb-1">
               <Droplets size={16} />
-              <span>2. Low Water & Drought Hardy</span>
+              <span>2. Water Availability & Drought Resilience</span>
             </div>
             <p className="text-[11px] text-white/80 leading-relaxed">
-              Winter brings little rain, but your clay soil holds onto monsoon water underground. We selected crops with <strong>deep taproots (0.8m–1.2m)</strong> that drink trapped moisture, so you only need 1 or 2 light waterings.
+              Precipitation and soil moisture indicators from NASA satellites confirm these crops fit the local dry-spell risk. We prioritize varieties with resilient root systems that tap subsoil moisture, minimizing irrigation demands.
             </p>
           </div>
 
           <div className="rounded-xl border border-amber-500/30 bg-neutral-900/70 p-3 backdrop-blur-md">
             <div className="flex items-center gap-2 font-bold text-amber-300 mb-1">
               <Sprout size={16} />
-              <span>3. Free Natural Fertilizer (Saves Urea Money)</span>
+              <span>3. Natural Soil Regeneration & Nutrient Balance</span>
             </div>
             <p className="text-[11px] text-white/80 leading-relaxed">
-              Legume pulses (Chickpea, Lentil, Pigeon Pea, Cowpea) pull free nitrogen directly from the air and store it in your soil. This cuts down how many bags of chemical urea you need to buy for next season.
+              Legumes and deep-rooting species in our rotation schedule fix atmospheric nitrogen and loosen compact subsoil, replenishing organic carbon and cutting synthetic fertilizer expenditure.
             </p>
           </div>
 
           <div className="rounded-xl border border-purple-500/30 bg-neutral-900/70 p-3 backdrop-blur-md">
             <div className="flex items-center gap-2 font-bold text-purple-300 mb-1">
               <Award size={16} />
-              <span>4. High Local Market Demand in Odisha</span>
+              <span>4. High Regional Commercial Viability</span>
             </div>
             <p className="text-[11px] text-white/80 leading-relaxed">
-              These are traditional staples grown and eaten across Odisha and neighboring states. You are guaranteed strong mandi buyer interest, reliable selling prices, and dependable food for your household.
+              Selected crops match high-demand agricultural markets and traditional agronomic practices in <strong>{displayLocation}</strong>, ensuring dependable harvest security and market saleability.
             </p>
           </div>
         </div>
