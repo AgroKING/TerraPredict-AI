@@ -281,7 +281,8 @@ function normalizeMl(mlData) {
   };
 }
 
-app.get("/", (req, res) => {
+app.get("*", (req, res, next) => {
+  if (req.path.startsWith("/api/")) return next();
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
 });
 
